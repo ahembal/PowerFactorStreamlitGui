@@ -55,9 +55,9 @@ def main():
                         "Analysis Result section \n"
                         "from drow-down-menu and \n"
                         "execute the code!")
-        with open(os.path.join("data/input/uploaded/meas"), "wb") as f:
+        with open(os.path("data/input/uploaded/meas"), "wb") as f:
             f.write(data_meas.getbuffer())
-        with open(os.path.join("data/input/uploaded/Temp.csv"), "wb") as f:
+        with open(os.path("data/input/uploaded/Temp.csv"), "wb") as f:
             f.write(data_csv.getbuffer())
     else:
         if st.sidebar.button("Load Sample Data"):
