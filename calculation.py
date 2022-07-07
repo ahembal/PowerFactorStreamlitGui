@@ -32,8 +32,9 @@ def main_run():
     from lmfit.lineshapes import gaussian, step
     from scipy import interpolate
     from matplotlib import colors
-
     cur_dir = os.getcwd()
+    if not os.path.exists(f"{cur_dir}/data/results"):
+        os.mkdir(f"{cur_dir}/data/results")
     old_res_files = os.listdir(f"{cur_dir}/data/results")
     for f in old_res_files:
         os.remove(cur_dir + '/data/results/' + f)

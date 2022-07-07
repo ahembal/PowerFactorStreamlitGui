@@ -23,7 +23,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
-st.session_state['execute'] = None
+
+if 'results' not in st.session_state:
+    st.session_state['results'] = None
+    st.session_state['execute'] = None
 
 from calculation import main_run
 def main():
@@ -119,7 +122,6 @@ def main():
             st.warning('Are you sure you want to execute this?')
 
             st.button('YES', on_click=main_run)
-
 
         if st.session_state['results']:
 
