@@ -32,6 +32,8 @@ from calculation import main_run
 def main():
     """Semi Automated ML App with Streamlit """
     cur_dir = os.getcwd()
+    if not os.path.exists(f"{cur_dir}/data/input/uploaded"):
+        os.mkdir(f"{cur_dir}/data/input/uploaded")
     global data_meas
     global data_csv
 
