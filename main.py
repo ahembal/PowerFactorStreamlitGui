@@ -31,7 +31,7 @@ if 'results' not in st.session_state:
 from calculation import main_run
 def main():
     """Semi Automated ML App with Streamlit """
-
+    cur_dir = os.getcwd()
     global data_meas
     global data_csv
 
@@ -55,15 +55,15 @@ def main():
                         "Analysis Result section \n"
                         "from drow-down-menu and \n"
                         "execute the code!")
-        with open("data/input/uploaded/meas", "wb") as f:
+
+        with open(f"{cur_dir}/data/input/uploaded/meas", "wb") as f:
             f.write(data_meas.getbuffer())
-        with open("data/input/uploaded/Temp.csv", "wb") as f:
+        with open(f"{cur_dir}/data/input/uploaded/Temp.csv", "wb") as f:
             f.write(data_csv.getbuffer())
     else:
         if st.sidebar.button("Load Sample Data"):
-            data_meas = open('data/input/sample/meas', "r")
-            data_csv = open('data/input/sample/Temp.csv', "r")
-            # main_run()
+            data_meas = open(f'{cur_dir}/data/input/sample/meas', "r")
+            data_csv = open(f'{cur_dir}/data/input/sample/Temp.csv', "r")
 
     global df_data_mess
     global df_data_csv
@@ -125,10 +125,10 @@ def main():
 
         if st.session_state['results']:
 
-            fig_list = [i for i in os.listdir("data/results") if ".png" in i]
+            fig_list = [i for i in os.listdir(f"{cur_dir}/data/results") if ".png" in i]
             fig_list = sorted(fig_list, key=lambda x: int(x.split("_")[1].split('.')[0]))
             for i in fig_list:
-                fig = plt.imread(f"data/results/{i}")
+                fig = plt.imread(f"{cur_dir}/data/results/{i}")
                 st.subheader(i.split('.')[0])
                 st.image(fig)
         # if (
