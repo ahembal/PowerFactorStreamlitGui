@@ -57,6 +57,8 @@ def main_run():
 
     ######################## INPUT FILES STRUCTURE  ################################
     main_path = os.getcwd()
+    if not os.path.exists(f'{main_path}/data/input/uploaded'):
+        os.mkdir(f"{cur_dir}/data/results")
     uploaded_files = os.listdir(main_path + '/data/input/uploaded')
     if uploaded_files:
         File_name_meas = 'data/input/uploaded/meas'  # Name of the IVC data file
