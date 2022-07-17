@@ -3,3 +3,7 @@ data/test.ipynb
 __pycache__/
 data/results/*
 data/input/uploaded/*
+iplist
+db/secrets.toml
+/db
+pwrfact.db

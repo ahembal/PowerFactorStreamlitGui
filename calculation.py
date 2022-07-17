@@ -1,24 +1,12 @@
 import os
 
+import streamlit
+
 
 def main_run():
-
     import csv
     import numpy
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from scipy.optimize import curve_fit
-    from scipy.ndimage import gaussian_filter1d
-    from scipy import signal
     from collections import defaultdict
-    from math import pi
-    from numpy import sin
-    from numpy import cos
-    from numpy import tan
-    from numpy import arctan
-    from scipy.optimize import leastsq
-    from numpy import exp, loadtxt, pi, sqrt
-    from lmfit import Model
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy.interpolate import interp1d
@@ -26,79 +14,64 @@ def main_run():
     import math
     import sys
     from numpy import diff
-    from columnar import columnar
-    import statistics
-    from lmfit import CompositeModel, Model
-    from lmfit.lineshapes import gaussian, step
-    from scipy import interpolate
-    from matplotlib import colors
-    cur_dir = os.getcwd()
-    if not os.path.exists(f"{cur_dir}/data/results"):
-        os.mkdir(f"{cur_dir}/data/results")
-    old_res_files = os.listdir(f"{cur_dir}/data/results")
-    for f in old_res_files:
-        os.remove(cur_dir + '/data/results/' + f)
 
     ######################### INPUT VARIABLES  ######################################
 
-    iv_len = 1  # number of data points in one IVC, 0-1-3-5
-    zero_bias_point = 0  # 1 or 0 depending on if there is an extra point
-    interp_len = 100  # interpolation length - rec value around the number of measured IVCs
-    smooth_param_iv = 1  # gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10
-    smooth_param_temp = 1  # gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10
-    dvdt_polyfit_order = 1  # Order of the polynomil fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
-    seebeck_polyfit_order = 0  # Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
-    film_thickness_micrometer = 50  # Film thickness in the unit of micrometer, for Power Factor calculations
-    img_dpi = 300  # Resolution of the saved images
-    img_show = False  # Show images before saving, True or False
-    show_summary = False  # Save summary
-    delimiter_csv_file = '\t'  # Delimiter type for created text files (not for the IVC or Temp files)
-    fig_no = 0  # Starting value for the figure num, rec value 0
+    iv_len = streamlit.session_state['input_variables']['iv_len']   # number of data points in one IVC, 0-1-3-5
+    zero_bias_point = streamlit.session_state['input_variables']['zero_bias_point']  # 1 or 0 depending on if there is an extra point
+    interp_len = streamlit.session_state['input_variables']['interp_len']  # interpolation length - rec value around the number of measured IVCs
+    smooth_param_iv = streamlit.session_state['input_variables']['smooth_param_iv']  # gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10
+    smooth_param_temp = streamlit.session_state['input_variables']['smooth_param_temp']  # gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10
+    dvdt_polyfit_order = streamlit.session_state['input_variables']['dvdt_polyfit_order']  # Order of the polynomil fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
+    seebeck_polyfit_order = streamlit.session_state['input_variables']['seebeck_polyfit_order']  # Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
+    film_thickness_micrometer = streamlit.session_state['input_variables']['film_thickness_micrometer']  # Film thickness in the unit of micrometer, for Power Factor calculations
+    img_dpi = streamlit.session_state['input_variables']['img_dpi']  # Resolution of the saved images
+    img_show = streamlit.session_state['input_variables']['img_show']  # Show images before saving, True or False
+    show_summary = streamlit.session_state['input_variables']['show_summary']  # Save summary
+    delimiter_csv_file = streamlit.session_state['input_variables']['delimiter_csv_file']  # Delimiter type for created text files (not for the IVC or Temp files)
+    fig_no = streamlit.session_state['input_variables']['fig_no']  # Starting value for the figure num, rec value 0
 
     ######################## INPUT FILES STRUCTURE  ################################
-    main_path = os.getcwd()
-    if not os.path.exists(f'{main_path}/data/input/uploaded'):
-        os.mkdir(f"{cur_dir}/data/results")
-    uploaded_files = os.listdir(main_path + '/data/input/uploaded')
-    if uploaded_files:
-        File_name_meas = 'data/input/uploaded/meas'  # Name of the IVC data file
-        File_name_temp = 'data/input/uploaded/Temp.csv'  # Name of the Temperature data file
-    else:
-        File_name_meas = 'data/input/sample/meas'  # Name of the IVC data file
-        File_name_temp = 'data/input/sample/Temp.csv'  # Name of the Temperature data file
+    cur_dir = os.getcwd()
+    File_name_meas = f'{cur_dir}/data/input/uploaded/meas'  # Name of the IVC data file
+    File_name_temp = f'{cur_dir}/data/input/uploaded/Temp.csv'  # Name of the Temperature data file
 
+    # File_name_meas='meas_neg.txt'
+    # File_name_meas='meas_only_iv'
+    # File_name_meas='meas_single_point'
 
+    # File_name_meas='meas_long.txt'
+    # File_name_temp='Temp_long.csv'
     ####################################
 
-    delimiter_type_meas = '\t'  # Delimiter type the IVC data file
-    Time_index = 0  # Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    Voltage_index = 1  # Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    Current_index = 2  # Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    Resistance_index = 3  # Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    skip_meas = 23  # Number of rows, that will be skipped at the beginning of IVC data file
+    delimiter_type_meas = streamlit.session_state['input_variables']['delimiter_type_meas']  # Delimiter type the IVC data file
+    Time_index = streamlit.session_state['input_variables']['Time_index']  # Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    Voltage_index = streamlit.session_state['input_variables']['Voltage_index']  # Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    Current_index = streamlit.session_state['input_variables']['Current_index']  # Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    Resistance_index = streamlit.session_state['input_variables']['Resistance_index']  # Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    skip_meas = streamlit.session_state['input_variables']['skip_meas']  # Number of rows, that will be skipped at the beginning of IVC data file
 
-    delimiter_type_temp = ','  # Delimiter type the Temperature data file
-    T_time_index = 0  # Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)
-    T_low_index = 1  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
-    T_high_index = 2  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
-    skip_temp = 1  # Number of rows, that will be skipped at the beginning of Temperature data file
+    delimiter_type_temp = streamlit.session_state['input_variables']['delimiter_type_temp']  # Delimiter type the Temperature data file
+    T_time_index = streamlit.session_state['input_variables']['T_time_index']  # Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)
+    T_low_index = streamlit.session_state['input_variables']['T_low_index']  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
+    T_high_index = streamlit.session_state['input_variables']['T_high_index']  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
+    skip_temp = streamlit.session_state['input_variables']['skip_temp']  # Number of rows, that will be skipped at the beginning of Temperature data file
 
-    ###########  # PRINTING INPUT VARIABLES ##############################
-    # if show_summary == False:
-    #     sys.stdout = open("data/results/RESULTS.csv", "w")
-    # # PRINT('------------   INPUT VARIABLES   ----------------')
-    # # PRINT('iv_len=', iv_len)
-    # # PRINT('zero_bias_point=', zero_bias_point)
-    # # PRINT('interp_len=', interp_len)
-    # # PRINT('smooth_param_iv=', smooth_param_iv)
-    # # PRINT('smooth_param_temp=', smooth_param_temp)
-    # # PRINT('dvdt_polyfit_order= ', dvdt_polyfit_order)
-    # # PRINT('seebeck_polyfit_order= ', seebeck_polyfit_order)
-    # # PRINT('film_thickness_micrometer = ', film_thickness_micrometer)
-    # # PRINT('img_dpi=', img_dpi)
-    # # PRINT('img_show = ', img_show)
-    # # PRINT('show_summary = ', show_summary)
-
+    ###########  PRINTING INPUT VARIABLES ##############################
+    if show_summary == False:
+        sys.stdout = open(f'{cur_dir}/data/results/RESULTS.csv', "w")
+    print('------------   INPUT VARIABLES   ----------------')
+    print('iv_len=', iv_len)
+    print('zero_bias_point=', zero_bias_point)
+    print('interp_len=', interp_len)
+    print('smooth_param_iv=', smooth_param_iv)
+    print('smooth_param_temp=', smooth_param_temp)
+    print('dvdt_polyfit_order= ', dvdt_polyfit_order)
+    print('seebeck_polyfit_order= ', seebeck_polyfit_order)
+    print('film_thickness_micrometer = ', film_thickness_micrometer)
+    print('img_dpi=', img_dpi)
+    print('img_show = ', img_show)
+    print('show_summary = ', show_summary)
     ########### LOADING MEAS DATA FILE (IVC) ############################
     meas_columns = defaultdict(list)  # each value in each column is appended to a list
     with open(File_name_meas) as f:
@@ -108,32 +81,32 @@ def main_run():
         for row in meas_data:
             for (i, v) in enumerate(row):
                 meas_columns[i].append(v)
-    # # PRINT('--------------------------------------------------')
-    # # PRINT('There are %s columns in IVC data' % len(meas_columns))
+    print('--------------------------------------------------')
+    print('There are %s columns in IVC data' % len(meas_columns))
 
     Time = np.array(list(np.float_(meas_columns[Time_index])))
     Voltage = np.array(list(np.float_(meas_columns[Voltage_index])))
     Current = np.array(list(np.float_(meas_columns[Current_index])))
     Resistance = np.array(list(np.float_(meas_columns[Resistance_index])))
     sum_dif_Voltage = sum(diff(Voltage))
-    # # PRINT('Time:',Time)
+    # print('Time:',Time)
 
-    # PRINT('sum_dif_Voltage:', sum_dif_Voltage)
-    # if (sum_dif_Voltage > 0):
-        # PRINT('Positive Seebeck factor')
-    # if (sum_dif_Voltage < 0):
-        # PRINT('Negative Seebeck factor')
+    print('sum_dif_Voltage:', sum_dif_Voltage)
+    if (sum_dif_Voltage > 0):
+        print('Positive Seebeck factor')
+    if (sum_dif_Voltage < 0):
+        print('Negative Seebeck factor')
 
     ########## Creating Table ############
     # headers = ['Voltage', 'Current', 'Resistance']
     # data= [Voltage,Current,Resistance]
     # list_1 = data.tolist()
     # table = columnar(list_1, headers, no_borders=True)
-    # # PRINT(table)
+    # print(table)
 
-    # # PRINT('Voltage:',Voltage)
-    # # PRINT('Current:',Current)
-    # # PRINT('Resistance:',Resistance)
+    # print('Voltage:',Voltage)
+    # print('Current:',Current)
+    # print('Resistance:',Resistance)
 
     ####### RAW MEAS DATA PLOTTING ###################
     fig_no = fig_no + 1
@@ -147,24 +120,35 @@ def main_run():
     plt.subplot(133)
     plt.plot(Resistance, '-o')
     plt.title("Resistance ($\Omega$)")
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
-
+    #######  SAVE DATA TO A CSV FILE #######################
+    csv_data = numpy.asarray([Voltage, Current, Resistance])
+    csv_data_transpose = csv_data.transpose()
+    variables = ['Voltage', 'Current', 'Resistance']
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+        header = csv.writer(f, delimiter=delimiter_csv_file)
+        header.writerow(variables)
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+        np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
+    print(variables)
+    print(csv_data_transpose)
+    #####################################################
 
     ##### Restructure Meas Data #####
     count = -1
     total_iv_len = round(iv_len + zero_bias_point)
 
     if (total_iv_len < 1):
-        # PRINT('Problem with input parameters: iv_len + zero_bias_point can not be smaller than 1.')
+        print('Problem with input parameters: iv_len + zero_bias_point can not be smaller than 1.')
         sys.exit()
 
     iv_number = math.floor(len(Voltage) / total_iv_len)
-    # # PRINT('total_iv_len=',total_iv_len)
-    # PRINT('There are %d different IVC lines.' % total_iv_len)
-    # PRINT('IVCs consist of %d data points.' % iv_number)
+    # print('total_iv_len=',total_iv_len)
+    print('There are %d different IVC lines.' % total_iv_len)
+    print('IVCs consist of %d data points.' % iv_number)
 
     Voltage_2d = np.zeros((total_iv_len, iv_number))
     Current_2d = np.zeros((total_iv_len, iv_number))
@@ -173,17 +157,16 @@ def main_run():
     for k in range(iv_number):
         count = count + 1
         for i in range(total_iv_len):
-            # # PRINT('count=',count)
-            # # PRINT('total_iv_len=',total_iv_len)
-            # # PRINT('index=',total_iv_len*count+i)
+            # print('count=',count)
+            # print('total_iv_len=',total_iv_len)
+            # print('index=',total_iv_len*count+i)
             Voltage_2d[i][count] = Voltage[total_iv_len * count + i]
             Current_2d[i][count] = Current[total_iv_len * count + i]
             Resistance_2d[i][count] = Resistance[total_iv_len * count + i]
 
             # Voltage_2d[i][count]=0
-            # # PRINT(i)
-    # # PRINT('Voltage_2d=', Voltage_2d)
-
+            # print(i)
+    # print('Voltage_2d=', Voltage_2d)
 
     ######################   IVC PLOTS #################################
 
@@ -202,7 +185,7 @@ def main_run():
         plt.plot(Resistance_2d[i,], '-o', label='IV_point %d' % i)
     plt.title("Resistance ($\Omega$)")
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -214,14 +197,14 @@ def main_run():
     csv_data = numpy.asarray([Voltage_2d_flat, Current_2d_flat, Resistance_2d_flat])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_2d', 'Current_2d', 'Resistance_2d']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
 
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     ##############  IVC INTERPOLATION ################################
@@ -230,17 +213,17 @@ def main_run():
     Current_2d_interp = np.zeros((total_iv_len, interp_len))
     Resistance_2d_interp = np.zeros((total_iv_len, interp_len))
     # columns = len(an_array[0])
-    # # PRINT('len_v_x=',len(Voltage_2d))
-    # # PRINT('len_v_y=',len(Voltage_2d[0]))
+    # print('len_v_x=',len(Voltage_2d))
+    # print('len_v_y=',len(Voltage_2d[0]))
 
     x_old = np.linspace(0, len(Voltage_2d[0]) - 1, num=len(Voltage_2d[0]))
     x_new = np.linspace(0, len(Voltage_2d[0]) - 1, num=len(Voltage_2d_interp[0]))
 
-    # PRINT('Interpolation length is: ', len(x_new))
-    # # PRINT('len_Voltage_2d_interp[0]=',len(Voltage_2d_interp[0]))
+    print('Interpolation length is: ', len(x_new))
+    # print('len_Voltage_2d_interp[0]=',len(Voltage_2d_interp[0]))
 
-    # # PRINT('x_old=',x_old)
-    # # PRINT('Voltage_2d_interp=',Voltage_2d_interp)
+    # print('x_old=',x_old)
+    # print('Voltage_2d_interp=',Voltage_2d_interp)
     for i in range(len(Voltage_2d)):
         interp_func_voltage = interp1d(x_old, Voltage_2d[i, :], kind='cubic')
         Voltage_2d_interp[i, :] = interp_func_voltage(x_new)
@@ -252,7 +235,7 @@ def main_run():
         if (sum_dif_Voltage < 0):
             Voltage_2d_interp_norm[i, :] = Voltage_2d_interp_norm[i, :] - max(Voltage_2d_interp_norm[i, :])
 
-        # # PRINT('interp_func_voltage',interp_func_voltage)
+        # print('interp_func_voltage',interp_func_voltage)
         # Voltage_2d_interp[i,:] = interp_func_voltage(x_new)
         # Current_2d_interp[i,:] = interp_func_current(x_new)
         # Resistance_2d_interp[i,:] = interp_func_resistance(x_new)
@@ -272,7 +255,7 @@ def main_run():
         plt.plot(Resistance_2d_interp[i,], '-o', label='IV_point %d' % i)
     plt.title("Resistance_interp ($\Omega$)")
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -284,14 +267,14 @@ def main_run():
     csv_data = numpy.asarray([Voltage_2d_interp_flat, Current_2d_interp_flat, Resistance_2d_interp_flat])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_2d_interp', 'Current_2d_interp', 'Resistance_2d_interp']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
 
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     ########################################################################
@@ -300,11 +283,11 @@ def main_run():
     Voltage_fit = np.zeros(iv_number)
 
     if (iv_len > 1):
-        # PRINT("Resistance_fit from IVCs:")
+        print("Resistance_fit from IVCs:")
         for k in range(iv_number):
             fit = np.polyfit(Current_2d[:, k], Voltage_2d[:, k], 1)
             f_fit = np.poly1d(fit)
-            # PRINT('IVC_%d = ' % k, f_fit)
+            print('IVC_%d = ' % k, f_fit)
             Resistance_fit[k] = abs(fit[0])
             Voltage_fit[k] = fit[1]
 
@@ -332,7 +315,7 @@ def main_run():
     plt.subplot(122)
     plt.plot(Resistance_fit, '-o')
     plt.title("Resistance_fit ($\Omega$)")
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -340,16 +323,15 @@ def main_run():
     csv_data = numpy.asarray([Voltage_fit, Resistance_fit])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_fit', 'Resistance_fit']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
 
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     fig_no = fig_no + 1
     plt.figure(fig_no, figsize=(10.5, 5))
@@ -359,7 +341,7 @@ def main_run():
     plt.subplot(122)
     plt.plot(Resistance_fit_interp, '-o')
     plt.title("Resistance_fit_interp ($\Omega$)")
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -367,15 +349,14 @@ def main_run():
     csv_data = numpy.asarray([Voltage_fit_interp, Resistance_fit_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_fit_interp', 'Resistance_fit_interp']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ###############################################################
     ########### LOADING TEMP DATA FILE ############################
@@ -387,18 +368,18 @@ def main_run():
         for row in temp_data:
             for (i, v) in enumerate(row):
                 temp_columns[i].append(v)
-    # PRINT('--------------------------------------------------')
-    # PRINT('There are %s columns in TEMP data' % len(temp_columns))
-    # # PRINT(temp_columns)
+    print('--------------------------------------------------')
+    print('There are %s columns in TEMP data' % len(temp_columns))
+    # print(temp_columns)
 
     # T_time = list(np.float_(temp_columns[T_time_index]))
     T_low = np.array(list(np.float_(temp_columns[T_low_index])))
     T_high = np.array(list(np.float_(temp_columns[T_high_index])))
     Delta_T = abs(T_high - T_low)
 
-    # # PRINT('T_low:',T_low)
-    # # PRINT('T_high:',T_high)
-    # # PRINT('Delta_T:',Delta_T)
+    # print('T_low:',T_low)
+    # print('T_high:',T_high)
+    # print('Delta_T:',Delta_T)
 
     ######## TEMP DATA INTERPOLATION #############
     Delta_T_interp = np.zeros(interp_len)
@@ -436,7 +417,7 @@ def main_run():
     plt.xlabel('$Meas~Point$')
     plt.legend()
     # plt.title("$\Delta T_{interp}$ (K)")
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -444,25 +425,25 @@ def main_run():
     csv_data = numpy.asarray([T_low, T_high, Delta_T])
     csv_data_transpose = csv_data.transpose()
     variables = ['T_low', 'T_high', 'Delta_T']
-    with open('data/results/Figure_%d_part1.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part1.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d_part1.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part1.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
     #######  SAVE DATA TO A CSV FILE #######################
     csv_data = numpy.asarray([Delta_T_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Delta_T_interp']
-    with open('data/results/Figure_%d_part2.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part2.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d_part2.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part2.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     ######################################
@@ -481,7 +462,7 @@ def main_run():
     plt.xlabel('$Delta T (K)$')
     plt.ylabel('$Delta V (mu V)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -491,17 +472,16 @@ def main_run():
     # csv_data=numpy.asarray([Voltage_2d_interp_norm_flat,Voltage_fit_interp_norm,Delta_T_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_fit_interp_norm and Voltage_2d_interp_norm and Delta_T_interp']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
 
-    # PRINT('----------------------------------------------------')
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print('----------------------------------------------------')
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ####### SMOOTHING DATA ##########################
     Voltage_2d_interp_norm_smooth = np.zeros((total_iv_len, interp_len))
@@ -528,7 +508,7 @@ def main_run():
     dvdt_Voltage_fit_interp_norm_smooth = np.polyfit(Delta_T_interp_smooth, Voltage_fit_interp_norm_smooth,
                                                      dvdt_polyfit_order)
     f_dvdt_Voltage_fit_interp_norm_smooth = np.poly1d(dvdt_Voltage_fit_interp_norm_smooth)
-    # PRINT('Linear fit dv/dt (from IVC) = ', f_dvdt_Voltage_fit_interp_norm_smooth)
+    print('Linear fit dv/dt (from IVC) = ', f_dvdt_Voltage_fit_interp_norm_smooth)
 
     fig_no = fig_no + 1
     plt.figure(fig_no, figsize=(7.5, 5))
@@ -541,15 +521,15 @@ def main_run():
         dvdt_Voltage_2d_interp_norm_smooth = np.polyfit(Delta_T_interp_smooth, Voltage_2d_interp_norm_smooth[i, :],
                                                         dvdt_polyfit_order)
         f_dvdt_Voltage_2d_interp_norm_smooth = np.poly1d(dvdt_Voltage_2d_interp_norm_smooth)
-        # # PRINT('dvdt_Voltage_2d_interp_norm_smooth = ',dvdt_Voltage_2d_interp_norm_smooth)
-        # PRINT('Linear fit dv/dt (from IVC_%d) = ' % i, f_dvdt_Voltage_2d_interp_norm_smooth)
+        # print('dvdt_Voltage_2d_interp_norm_smooth = ',dvdt_Voltage_2d_interp_norm_smooth)
+        print('Linear fit dv/dt (from IVC_%d) = ' % i, f_dvdt_Voltage_2d_interp_norm_smooth)
         plt.plot(Delta_T_interp_smooth, f_dvdt_Voltage_2d_interp_norm_smooth(Delta_T_interp_smooth), '-',
                  label=f_dvdt_Voltage_2d_interp_norm_smooth)
     plt.title("$Delta V_{sm}$ = f($Delta T_{sm}$)")
     plt.xlabel('$Delta T (K)$')
     plt.ylabel('$Delta V (mu V)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -559,15 +539,14 @@ def main_run():
         [Voltage_fit_interp_norm_smooth, Voltage_2d_interp_norm_smooth_flat, Delta_T_interp_smooth])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_fit_interp_norm_smooth and Voltage_2d_interp_norm_smooth and Delta_T_smooth_interp']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ###################  CREATING A DATABASE FILE #############
     #######  SAVE DATA TO A CSV FILE #######################
@@ -575,15 +554,14 @@ def main_run():
     csv_data = numpy.concatenate([Resistance_2d_interp_flat, Voltage_2d_interp_norm_smooth_flat, Delta_T_interp_smooth])
     csv_data_transpose = csv_data.transpose()
     variables = ['Res Vol T']
-    with open('data/results/DATABASE_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/DATABASE_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/DATABASE_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/DATABASE_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ###### Delta_V/Delta_T Plot vs T_HIGH #########################
 
@@ -601,7 +579,7 @@ def main_run():
     plt.xlabel('$T_{High} (C)$')
     plt.ylabel('$Cumulative~Seebeck~Coeff.~(mu V/K) $')
     # plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -612,15 +590,14 @@ def main_run():
     csv_data_transpose = csv_data.transpose()
     variables = [
         'Delta_Voltage_fit_interp_norm_smooth_BY_Delta_T_smooth_interp_T and Voltage_2d_interp_norm_smooth_BY_Delta_T_smooth_interp']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ################ SEEBECK & IVC & TEMP PlOT ######################################
     diff_Voltage_2d_interp_norm_smooth = np.zeros((total_iv_len, interp_len - 1))
@@ -661,7 +638,7 @@ def main_run():
     plt.ylabel('$Seebeck~Coeff.~(mu V/K)$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -678,41 +655,40 @@ def main_run():
     csv_data = numpy.asarray([part11, part12])
     csv_data_transpose = csv_data.transpose()
     variables = ['d_V', 'Seebeck']
-    with open('data/results/Figure_%d_part1.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part1.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d_part1.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part1.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     #######  SAVE DATA TO A CSV FILE #######################
     csv_data = numpy.asarray([diff_Delta_T_interp_smooth])
     csv_data_transpose = csv_data.transpose()
     variables = ['diff_Delta_T_smooth']
-    with open('data/results/Figure_%d_part2.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part2.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d_part2.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part2.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     #######  SAVE DATA TO A CSV FILE #######################
     csv_data = numpy.asarray([T_high_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['T_high_interp']
-    with open('data/results/Figure_%d_part3.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part3.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d_part3.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d_part3.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ################ SEEBECK & IVC & TEMP PlOT NORMALIZED ######################################
     fig_no = fig_no + 1
@@ -728,7 +704,6 @@ def main_run():
     # plt.legend()
     # plt.xlabel('$Meas. Point$')
     # plt.ylabel('$\Delta V_{INTERP} (\mu V)$')
-
 
     diff_Delta_T_interp_smooth = diff(Delta_T_interp_smooth)
     plt.plot(diff_Delta_T_interp_smooth / max(diff_Delta_T_interp_smooth), '-o', label='Delta_T')
@@ -751,7 +726,7 @@ def main_run():
     plt.ylabel('$Seebeck~Coeff.~(mu V/K)$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -776,7 +751,7 @@ def main_run():
     plt.ylabel('$Seebeck~Coeff.~(mu V/K)$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -786,13 +761,13 @@ def main_run():
         [seebeck_Voltage_fit_interp_norm_smooth, seebeck_Voltage_2d_interp_norm_smooth_flat, T_high_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Seebeck_fit and Seebeck_2d and T_high']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     ###### Seebeck FIT #########################
@@ -800,7 +775,7 @@ def main_run():
         T_high_interp[0:len(seebeck_Voltage_fit_interp_norm_smooth)], seebeck_Voltage_fit_interp_norm_smooth,
         seebeck_polyfit_order)
     f_polyfit_seebeck_Voltage_fit_interp_norm_smooth = np.poly1d(polyfit_seebeck_Voltage_fit_interp_norm_smooth)
-    # PRINT('Poly fit to Seebeck (from IVC) = ', f_polyfit_seebeck_Voltage_fit_interp_norm_smooth)
+    print('Poly fit to Seebeck (from IVC) = ', f_polyfit_seebeck_Voltage_fit_interp_norm_smooth)
 
     fig_no = fig_no + 1
     plt.figure(fig_no, figsize=(7.5, 5))
@@ -818,17 +793,18 @@ def main_run():
                  label='IV_point %d' % i)
 
         polyfit_seebeck_Voltage_2d_interp_norm_smooth = np.polyfit(
-            T_high_interp[0:len(seebeck_Voltage_2d_interp_norm_smooth[i, :])], seebeck_Voltage_2d_interp_norm_smooth[i, :],
+            T_high_interp[0:len(seebeck_Voltage_2d_interp_norm_smooth[i, :])],
+            seebeck_Voltage_2d_interp_norm_smooth[i, :],
             seebeck_polyfit_order)
         f_polyfit_seebeck_Voltage_2d_interp_norm_smooth = np.poly1d(polyfit_seebeck_Voltage_2d_interp_norm_smooth)
-        # PRINT('Poly fit to Seebeck (from IVC_%d) = ' % i, f_polyfit_seebeck_Voltage_2d_interp_norm_smooth)
+        print('Poly fit to Seebeck (from IVC_%d) = ' % i, f_polyfit_seebeck_Voltage_2d_interp_norm_smooth)
         plt.plot(T_high_interp, f_polyfit_seebeck_Voltage_2d_interp_norm_smooth(T_high_interp), '-',
                  label=f_polyfit_seebeck_Voltage_2d_interp_norm_smooth)
     plt.title("$Seebeck~Coefficient$")
     plt.ylabel('$Seebeck~Coeff.~(mu V/K)$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -838,30 +814,28 @@ def main_run():
         [seebeck_Voltage_fit_interp_norm_smooth, seebeck_Voltage_2d_interp_norm_smooth_flat, T_high_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Seebeck_fit and Seebeck_2d and T_high']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ################ Resistance vs TEMP PLOT ######################################
     fig_no = fig_no + 1
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
-        pass
         # plt.plot(T_high_interp, Resistance_fit_interp,'-o',label='IV_fit_data')
-        # PRINT('Resistance_fit_interp=', Resistance_fit_interp)
+        print('Resistance_fit_interp=', Resistance_fit_interp)
     for i in range(len(Voltage_2d_interp)):
         plt.plot(T_high_interp, Resistance_2d_interp[i,], '-o', label='IV_point %d' % i)
     plt.title("$Resistance$")
     plt.ylabel('$R~(\Omega)$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -870,15 +844,14 @@ def main_run():
     csv_data = numpy.concatenate([Resistance_fit_interp, Resistance_2d_interp_flat, T_high_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Resistance_fit and Resitance_2d and T_high']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
-
 
     ########### CONDUCTIVITY  #################################
     Conductivity_2d_interp = np.zeros((total_iv_len, interp_len))
@@ -889,7 +862,7 @@ def main_run():
     if (total_iv_len > 1):
         Conductivity_fit_interp = 1 / (Resistance_fit_interp * film_thickness_cm)
         # plt.plot(T_high_interp, Conductivity_fit_interp,'-o',label='IV_fit')
-        # PRINT('Conductivity_fit_interp =', Conductivity_fit_interp)
+        print('Conductivity_fit_interp =', Conductivity_fit_interp)
     for i in range(len(Voltage_2d_interp)):
         Conductivity_2d_interp[i,] = 1 / (Resistance_2d_interp[i,] * film_thickness_cm)
         plt.plot(T_high_interp, Conductivity_2d_interp[i,], '-o', label='IV_point %d' % i)
@@ -897,7 +870,7 @@ def main_run():
     plt.ylabel('$\sigma~(Siemens/cm)$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
@@ -908,13 +881,13 @@ def main_run():
     csv_data = numpy.concatenate([Conductivity_fit_interp, Conductivity_2d_interp_flat, T_high_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['Conductivity_fit and Conductivity_2d and T_high']
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
 
     ########### POWER FACTOR  #################################
@@ -922,56 +895,41 @@ def main_run():
 
     fig_no = fig_no + 1
     plt.figure(fig_no, figsize=(7.5, 5))
-    if total_iv_len > 1:
+    if (total_iv_len > 1):
         PowerFactor_fit_interp = seebeck_Voltage_fit_interp_norm_smooth ** 2 * Conductivity_fit_interp[0:len(
             seebeck_Voltage_fit_interp_norm_smooth)] / 10 ** (4)
         plt.plot(T_high_interp[0:len(PowerFactor_fit_interp)], PowerFactor_fit_interp, '-o', label='IV_fit')
-        # PRINT('PowerFactor_fit_interp =', PowerFactor_fit_interp)
+        print('PowerFactor_fit_interp =', PowerFactor_fit_interp)
     for i in range(len(Voltage_2d_interp)):
-        PowerFactor_2d_interp[i, 0:len(seebeck_Voltage_fit_interp_norm_smooth)] = \
-            seebeck_Voltage_2d_interp_norm_smooth[i, :] ** 2 * \
-            Conductivity_2d_interp[i, 0:len(seebeck_Voltage_fit_interp_norm_smooth)] / 10 ** 4
-        plt.plot(T_high_interp[0:len(PowerFactor_2d_interp[i,])], PowerFactor_2d_interp[i,], '-o', label='IV_point %d' % i)
+        PowerFactor_2d_interp[i, 0:len(seebeck_Voltage_fit_interp_norm_smooth)] = seebeck_Voltage_2d_interp_norm_smooth[
+                                                                                  i, :] ** 2 * Conductivity_2d_interp[i,
+                                                                                               0:len(
+                                                                                                   seebeck_Voltage_fit_interp_norm_smooth)] / 10 ** (
+                                                                                      4)
+        plt.plot(T_high_interp[0:len(PowerFactor_2d_interp[i,])], PowerFactor_2d_interp[i,], '-o',
+                 label='IV_point %d' % i)
     plt.title("$Power~Factor$")
     plt.ylabel('$S^2\sigma~(mu W/(mK^2))$')
     plt.xlabel('$T_{High} (C)$')
     plt.legend()
-    plt.savefig('data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
+    plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
     if img_show == True:
         plt.show()
 
     #######  SAVE DATA TO A CSV FILE #######################
-    if total_iv_len < 2:
+    if (total_iv_len < 2):
         PowerFactor_fit_interp = np.zeros(interp_len - 1)
     PowerFactor_2d_interp_flat = PowerFactor_2d_interp.flatten()
     csv_data = numpy.concatenate([PowerFactor_fit_interp, PowerFactor_2d_interp_flat, T_high_interp])
     csv_data_transpose = csv_data.transpose()
     variables = ['PowerFactor_fit and PowerFactor_2d and T_high']
-
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
         np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
-    #####################################################
-
-    #######  SAVE DATA TO A CSV FILE #######################
-    csv_data = numpy.asarray([Voltage, Current, Resistance])
-    csv_data_transpose = csv_data.transpose()
-    variables = ['Voltage', 'Current', 'Resistance']
-
-    with open('data/results/Figure_%d.csv' % fig_no, 'a+') as f:
-        header = csv.writer(f, delimiter=delimiter_csv_file)
-        header.writerow(variables)
-    with open('data/results/Figure_%d.csv' % fig_no, 'ab') as f:
-        np.savetxt(f, csv_data_transpose, delimiter=delimiter_csv_file)
-    # PRINT(variables)
-    # PRINT(csv_data_transpose)
+    print(variables)
+    print(csv_data_transpose)
     #####################################################
     if show_summary == False:
         sys.stdout.close()
-
-    import streamlit as st
-    st.session_state['results'] = True

@@ -1,7 +1,5 @@
+import csv
 import os
-import time
-
-import streamlit as st
 # Core Pkgs
 import streamlit as st
 
@@ -10,44 +8,109 @@ import pandas as pd
 # Data Viz Pkg
 import matplotlib.pyplot as plt
 import matplotlib
-
+from calculation import main_run
 
 matplotlib.use("Agg")
-import seaborn as sns
 
-# ML Packages
-from sklearn import model_selection
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import SVC
+#  Instantiating parameters
+if 'results' not in st.session_state: st.session_state['results'] = None
+if 'execute' not in st.session_state: st.session_state['execute'] = None
+if 'loaded_sample_data' not in st.session_state: st.session_state['loaded_sample_data'] = False
+if 'uploaded_input_data' not in st.session_state: st.session_state['uploaded_input_data'] = False
+if 'experiment_parameters' not in st.session_state: st.session_state['experiment_parameters'] = {}
+if 'meas_path' not in st.session_state: st.session_state['meas_path'] = None
+if 'csv_path' not in st.session_state: st.session_state['csv_path'] = None
+if 'input_variables' not in st.session_state: st.session_state['input_variables'] = {
+    'iv_len':1,
+    'zero_bias_point': 0,
+    'interp_len': 100,
+    'smooth_param_iv': 1,
+    'smooth_param_temp': 1,
+    'dvdt_polyfit_order': 1,
+    'seebeck_polyfit_order': 0,
+    'film_thickness_micrometer': 50,
+    'img_dpi': 300,
+    'img_show': False,
+    'show_summary': False,
+    'delimiter_csv_file': '\t',
+    'fig_no': 0,
+    'delimiter_type_meas': '\t',
+    'Time_index': 0,
+    'Voltage_index': 1,
+    'Current_index': 2,
+    'Resistance_index': 3,
+    'skip_meas': 23,
+    'delimiter_type_temp': ',',
+    'T_time_index': 0,
+    'T_low_index': 1,
+    'T_high_index': 2,
+    'skip_temp': 1
 
-if 'results' not in st.session_state:
-    st.session_state['results'] = None
-    st.session_state['execute'] = None
+}
 
-from calculation import main_run
+
+def reload_def_params():
+    st.session_state['input_variables'] = {
+        'iv_len': 1,
+        'zero_bias_point': 0,
+        'interp_len': 100,
+        'smooth_param_iv': 1,
+        'smooth_param_temp': 1,
+        'dvdt_polyfit_order': 1,
+        'seebeck_polyfit_order': 0,
+        'film_thickness_micrometer': 50,
+        'img_dpi': 300,
+        'img_show': False,
+        'show_summary': False,
+        'delimiter_csv_file': '\t',
+        'fig_no': 0,
+        'delimiter_type_meas': '\t',
+        'Time_index': 0,
+        'Voltage_index': 1,
+        'Current_index': 2,
+        'Resistance_index': 3,
+        'skip_meas': 23,
+        'delimiter_type_temp': ',',
+        'T_time_index': 0,
+        'T_low_index': 1,
+        'T_high_index': 2,
+        'skip_temp': 1
+
+    }
+
+
 def main():
-    """Semi Automated ML App with Streamlit """
+    delimiter_type_meas = '\t'
     cur_dir = os.getcwd()
     if not os.path.exists(f"{cur_dir}/data/input/uploaded"):
         os.mkdir(f"{cur_dir}/data/input/uploaded")
-    global data_meas
-    global data_csv
-
-    def callback(state, object):
-        st.session_state[f'{state}'] = object
-
-    def calculate():
-        st.sidebar.selectbox()
-        print(data_meas)
-        print(data_csv)
 
     st.sidebar.title("Power Factor Calculation")
-    activities = ["About", "Plot Input Data", "Tune The Parameters", "Analysis Result", "Session Info"]
+    activities = ["About", "Plot Input Data", "Tune The Parameters", "Analysis & Results", "Session Info"]
     choice = st.sidebar.selectbox("Please Select Activities", activities)
+
+    def clean_upload_dir():
+        files = os.listdir(f'{cur_dir}/data/results')
+        files = [f'{cur_dir}/data/results/{file}' for file in files]
+        files_input = os.listdir(f'{cur_dir}/data/input/uploaded/')
+        files_input = [f'{cur_dir}/data/results/{file}' for file in files_input]
+        tobe_deleted_files = files + files_input
+        for file in tobe_deleted_files:
+            if os.path.exists(file):
+                os.remove(file)
+        st.session_state['results'] = False
+        st.session_state['meas_path'] = None
+        st.session_state['csv_path'] = None
+        st.session_state['uploaded_input_data'] = False
+        st.session_state['loaded_sample_data'] = False
+        st.session_state['results'] = None
+        st.session_state['execute'] = None
+
+    def return_format(delimeter):
+        if delimeter == "\t":
+            return "\\t"
+        elif delimeter == ",":
+            return ","
 
     st.sidebar.subheader("File Upload")
     data_meas = st.sidebar.file_uploader("Upload a meas file")
@@ -57,96 +120,105 @@ def main():
                         "Analysis Result section \n"
                         "from drow-down-menu and \n"
                         "execute the code!")
+        if st.sidebar.button('Delete uploaded files!'):
+            st.sidebar.warning('Are you sure you want to delete files and all the results?')
+            st.sidebar.button('Yes!', on_click=clean_upload_dir)
 
+        st.session_state['meas_path'] = f"{cur_dir}/data/input/uploaded/meas"
+        st.session_state['csv_path'] = f"{cur_dir}/data/input/uploaded/Temp.csv"
+        st.session_state['uploaded_input_data'] = True
+        st.session_state['loaded_sample_data'] = False
+        if st.session_state['results'] and not st.session_state['execute']:
+            st.warning("You uploaded new data, but your results are old, if you would like to re execute the code, first you need to delete results from Session info section!")
         with open(f"{cur_dir}/data/input/uploaded/meas", "wb") as f:
             f.write(data_meas.getbuffer())
         with open(f"{cur_dir}/data/input/uploaded/Temp.csv", "wb") as f:
             f.write(data_csv.getbuffer())
-    else:
+    elif not st.session_state['loaded_sample_data']:
         if st.sidebar.button("Load Sample Data"):
-            data_meas = open(f'{cur_dir}/data/input/sample/meas', "r")
-            data_csv = open(f'{cur_dir}/data/input/sample/Temp.csv', "r")
-
-    global df_data_mess
-    global df_data_csv
+            st.session_state['meas_path'] = f'{cur_dir}/data/input/sample/meas'
+            st.session_state['csv_path'] = f'{cur_dir}/data/input/sample/Temp.csv'
+            st.session_state['loaded_sample_data'] = True
+    st.sidebar.write(st.session_state)
 
     if choice == 'Plot Input Data':
         st.header("Visualize Input Data")
-        if data_csv:
+        if st.session_state['uploaded_input_data'] or st.session_state['loaded_sample_data']:
             st.subheader("temp csv data")
-            df = pd.read_csv(data_csv)
+            if st.session_state['uploaded_input_data']:
+                df = pd.read_csv(st.session_state['csv_path'])
+            elif st.session_state['loaded_sample_data']:
+                df = pd.read_csv(st.session_state['csv_path'])
+            else:
+                st.warning("Something went wrong with file upload/load!")
             df.plot()
             st.pyplot(fig=plt)
-        # if data_meas:
-        #     st.subheader("meas data")
-        #     with open(data_meas) as f:
-        #         print(f.readline())
         else:
             st.subheader("First you need to upload data or you can click to Load Sample Data button!")
 
     elif choice == 'Tune The Parameters':
-        st.subheader("Tune Parameters")
+        st.header("Tune Parameters")
+        st.button('ReLoad default parameters!', on_click=reload_def_params)
 
         ######################### INPUT VARIABLES  ######################################
-        iv_len = 1  # number of data points in one IVC, 0-1-3-5
-        zero_bias_point = 0  # 1 or 0 depending on if there is an extra point
-        interp_len = 100  # interpolation length - rec value around the number of measured IVCs
-        smooth_param_iv = 1  # gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10
-        smooth_param_temp = 1  # gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10
-        dvdt_polyfit_order = 1  # Order of the polynomil fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
-        seebeck_polyfit_order = 0  # Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
-        film_thickness_micrometer = 50  # Film thickness in the unit of micrometer, for Power Factor calculations
-        img_dpi = 300  # Resolution of the saved images
-        img_show = False  # Show images before saving, True or False
-        show_summary = False  # Save summary
-        delimiter_csv_file = '\t'  # Delimiter type for created text files (not for the IVC or Temp files)
-        fig_no = 0  # Starting value for the figure num, rec value 0
+        st.subheader("Input Variables")
+        st.session_state['input_variables']['iv_len'] = st.selectbox('IV length', [0, 1, 3, 5], index=[0, 1, 3, 5].index(st.session_state['input_variables']['iv_len']), help="number of data points in one IVC, 0-1-3-5")
+        st.session_state['input_variables']['zero_bias_point'] = st.radio('Zero Bias Point', [0, 1], index=[0, 1].index(st.session_state['input_variables']['zero_bias_point']), horizontal=True, help="1 or 0 depending on if there is an extra point")
+        st.session_state['input_variables']['interp_len'] = st.slider('Interpolation Length', 50, 150, value=st.session_state['input_variables']['interp_len'], help="interpolation length - rec value around the number of measured IVCs")
+        st.session_state['input_variables']['smooth_param_iv'] = st.number_input('Smooth Param IV', 0, 10, value=st.session_state['input_variables']['smooth_param_iv'], help="gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10")
+        st.session_state['input_variables']['smooth_param_temp'] = st.number_input('Smooth Param Temp', 0, 10, value=st.session_state['input_variables']['smooth_param_temp'], help="gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10")
+        st.session_state['input_variables']['dvdt_polyfit_order'] = st.selectbox('Order of the Polynomial fit', [0, 1, 2], index=[0, 1, 2].index(st.session_state['input_variables']['dvdt_polyfit_order']), help="Order of the polynomial fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit")
+        st.session_state['input_variables']['seebeck_polyfit_order'] = st.selectbox('Order of the Polynomial fit', [0, 1, 2], index=[0, 1, 2].index(st.session_state['input_variables']['seebeck_polyfit_order']), help="Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit")
+        st.session_state['input_variables']['film_thickness_micrometer'] = st.slider('Interpolation Length', 0, 100, value=st.session_state['input_variables']['film_thickness_micrometer'], help="Film thickness in the unit of micrometer, for Power Factor calculations")
+        st.session_state['input_variables']['img_dpi'] = st.number_input('Img Dpi', 200, 400, value=st.session_state['input_variables']['img_dpi'], help="Resolution of the saved images")
+        st.session_state['input_variables']['img_show'] = st.radio('Img Show', [False, True], index=[False, True].index(st.session_state['input_variables']['img_show']), horizontal=True, help="Show images before saving, True or False")
+        st.session_state['input_variables']['show_summary'] = st.radio('Img Show', [False, True], index=[False, True].index(st.session_state['input_variables']['show_summary']), horizontal=True, help="Save summary")
+        st.session_state['input_variables']['delimiter_csv_file'] = st.selectbox('Delimiter type', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_csv_file']), format_func=return_format, help="Delimiter type for created text files (not for the IVC or Temp files)")
+        st.session_state['input_variables']['fig_no'] = st.number_input('Fig no', 0, 100, value=st.session_state['input_variables']['fig_no'], help="Starting value for the figure num, rec value 0")
 
         ######################### OTHER VARIABLES  ######################################
-        delimiter_type_meas = '\t'  # Delimiter type the IVC data file
-        Time_index = 0  # Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-        Voltage_index = 1  # Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-        Current_index = 2  # Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-        Resistance_index = 3  # Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-        skip_meas = 23  # Number of rows, that will be skipped at the beginning of IVC data file
+        st.subheader("Other Variables")
+        st.write("Meas File variables:")
+        st.session_state['input_variables']['delimiter_type_meas'] = st.selectbox('Delimiter type meas', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_type_meas']), format_func=return_format, help="Delimiter type the IVC data file")
+        st.session_state['input_variables']['Time_index'] = st.number_input('Time Index', 0, 5, value=st.session_state['input_variables']['Time_index'], help="Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        st.session_state['input_variables']['Voltage_index'] = st.number_input('Voltage Index', 0, 5, value=st.session_state['input_variables']['Voltage_index'], help="Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        st.session_state['input_variables']['Current_index'] = st.number_input('Current Index', 0, 5, value=st.session_state['input_variables']['Current_index'], help="Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        st.session_state['input_variables']['Resistance_index'] = st.number_input('Resistance Index', 0, 5, value=st.session_state['input_variables']['Resistance_index'], help="Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        st.session_state['input_variables']['skip_meas'] = st.number_input('Number of Rows to skip in meas file', 0, 30, value=st.session_state['input_variables']['skip_meas'], help="Number of rows, that will be skipped at the beginning of IVC data file")
+        st.write("-------------------------------------------------------------------------")
+        st.write("Temp File variables:")
+        st.session_state['input_variables']['delimiter_type_temp'] = st.selectbox('Delimiter type temp', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_type_temp']), format_func=return_format, help="Delimiter type the Temperature data file")
+        st.session_state['input_variables']['T_time_index'] = st.number_input('T time Index', 0, 5, value=st.session_state['input_variables']['T_time_index'], help="Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)")
+        st.session_state['input_variables']['T_low_index'] = st.number_input('T low Index', 0, 5, value=st.session_state['input_variables']['T_low_index'], help="Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)")
+        st.session_state['input_variables']['T_high_index'] = st.number_input('T high Index', 0, 5, value=st.session_state['input_variables']['T_high_index'], help="Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc")
+        st.session_state['input_variables']['skip_temp'] = st.number_input('Number of Rows to skip in temp file', 0, 30, value=st.session_state['input_variables']['skip_temp'], help="Number of rows, that will be skipped at the beginning of Temperature data file")
 
-        delimiter_type_temp = ','  # Delimiter type the Temperature data file
-        T_time_index = 0  # Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)
-        T_low_index = 1  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
-        T_high_index = 2  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
-        skip_temp = 1  # Number of rows, that will be skipped at the beginning of Temperature data file
-
-    elif choice == 'Analysis Result':
+    elif choice == 'Analysis & Results':
         st.subheader("Exploratory Data Analysis")
-        if (
-                st.button('EXECUTE', on_click=callback, args=('execute', True))
-            ):
-            st.warning('Are you sure you want to execute this?')
-
-            st.button('YES', on_click=main_run)
 
         if st.session_state['results']:
-
             fig_list = [i for i in os.listdir(f"{cur_dir}/data/results") if ".png" in i]
             fig_list = sorted(fig_list, key=lambda x: int(x.split("_")[1].split('.')[0]))
             for i in fig_list:
                 fig = plt.imread(f"{cur_dir}/data/results/{i}")
                 st.subheader(i.split('.')[0])
                 st.image(fig)
-        # if (
-        #         st.button('EXECUTE', on_click=callback, args=('execute', True))
-        #         or st.session_state.execute == True
-        # ):
-        #     st.warning('Are you sure you want to execute this?')
-        #     if st.button('YES'):
-        #         print('test11')
-        #         st.write('You did it!')
-        #         st.session_state.execute = False
 
+        elif st.session_state['uploaded_input_data'] or st.session_state['loaded_sample_data']:
+            if (
+                    st.button('EXECUTE', args=('execute', True))
+            ):
+                st.warning('Are you sure you want to execute this?')
+
+                st.button('YES', on_click=main_run)
+                st.session_state['results'] = True
+                st.session_state['execute'] = True
+        else:
+            st.warning('You have not executed any analysis and/or uploaded any data!')
 
     elif choice == 'About':
-        st.subheader("About Page")
-        text = "This page will contain information about the software!"
+        st.header("About Page")
+        text = "KTH-BIOX LAB POWER FACTOR CALCULATION GUI INTERFACE!"
 
         def example(color1, color2, color3, content):
             st.markdown(
@@ -157,26 +229,75 @@ def main():
         color2 = '#00ff00'
         color3 = '#ffffff'
         example(color1, color2, color3, text)
+        st.subheader("Purpose:")
+        st.write("Purpose of this software is to help researchers to run explore and visualize their experiment through this GUI.")
+        st.subheader('Author: ')
+        st.write("Writer goes here!")
+        st.subheader('Contact: ')
+        st.write("Contact information goes here!")
+        st.subheader('Usage: ')
+        st.write("**To run with sample data:**")
+        st.write("First, push the *Load Sample Data* button at the bottom of sidebar. "
+                "Then you can select activities from drow-down menu at the top of sidebar. "
+                "Plot input data through Plot section. Tune paramaters through Tune section. "
+                "Analyse and see results through Analysis section.")
+        st.write("**To run with uploaded data:**")
+        st.write("First, upload the defined data files through *drag and drop section*. "
+                "Then you can select activities from drow-down menu at the top of sidebar. "
+                "Plot input data through *Plot* section. Tune paramaters through *Tune* section. "
+                "Analyse and see results through *Analysis* section. "
+                 "Download or delete results through *Session Info* section.")
+        st.subheader('License: ')
+        st.write("All rights reserved.®")
 
     elif choice == 'Session Info':
         st.subheader("Session Info")
 
-        "st.session_state object: ", st.session_state
-        st.info
+        def clean_results_dir():
+            files = os.listdir(f'{cur_dir}/data/results')
+            for file in files:
+                os.remove(f'{cur_dir}/data/results/{file}')
+            st.session_state['results'] = False
+            st.session_state['loaded_sample_data'] = False
+            st.session_state['uploaded_input_data'] = False
+
+        # "st.session_state object: ", st.session_state
+        if os.path.exists(f'{cur_dir}/data/results/RESULTS.csv'):
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown("""<style> 
+                            div.stButton > button:first-child {} </style>""",
+                            unsafe_allow_html=True)
+                with open('data/results/RESULTS.csv') as f:
+                    st.download_button('Download RESULTS as CSV', f)  # Defaults to 'text/plain'
+            with col2:
+                st.markdown("""<style> 
+                            div.stButton > button:first-child {} </style>""",
+                            unsafe_allow_html=True)
+                with open('data/results/DATABASE_8.csv') as f:
+                    st.download_button('Download DATABASE_8', f)  # Defaults to 'text/plain'
+            with col3:
+                st.markdown("""<style> 
+                            div.stButton > button:first-child { background-color: rgb(211, 77, 77); } </style>""",
+                            unsafe_allow_html=True)
+                if st.button('Delete Results!'):
+                    st.warning("All results will be deleted!")
+                    st.button('Yes, Delete!', on_click=clean_results_dir)
+
+            st.subheader("CSV context:")
+            # text, csv = split_result_csv()
+            with open('data/results/RESULTS.csv') as f:
+                meas_data = csv.reader(f, delimiter=delimiter_type_meas)
+                for row in meas_data:
+                    row = str(row).replace("[", " ").replace("]", " ").replace("'", " ").replace('"', ' ')
+                    st.text(row)
+            # df_res = pd.read_csv('data/results/RESULTS.csv', skiprows=23)
+            # st.write(df_res)
+        else:
+            st.warning("If you would like to see and download *RESULTS.csv*:"
+                       "\n\nFirst, you should upload files and run the analysis in Analysis & Results page!")
 
 
 if __name__ == '__main__':
     main()
-
-# col1, col2, col3 = st.beta_columns(3)
-# with col1:
-#     color1 = st.color_picker('col1', '#1aa3ff', key=1)
-# st.write(f"col1{color1}")
-# with col2:
-#     color2 = st.color_picker('col2', '#00ff00', key=2)
-# st.write(f"col2{color2}")
-# with col3:
-#     color3 = st.color_picker('col3', '#ffffff', key=3)
-# st.write(f"col3{color3}")
-# text = st.text_input("text input")
-
