@@ -1,6 +1,8 @@
 import csv
 import os
 # Core Pkgs
+from collections import defaultdict
+
 import streamlit as st
 
 # EDA Pkgs
@@ -147,12 +149,42 @@ def main():
             st.subheader("temp csv data")
             if st.session_state['uploaded_input_data']:
                 df = pd.read_csv(st.session_state['csv_path'])
+                meas_columns = defaultdict(list)
+                with open(st.session_state['meas_path']) as f:
+                    meas_data = csv.reader(f, delimiter=delimiter_type_meas)
+                    for skip in range(23):
+                        next(meas_data)
+                    for row in meas_data:
+                        for (i, v) in enumerate(row):
+                            meas_columns[i].append(v)
+                df_meas = pd.DataFrame(meas_columns)
             elif st.session_state['loaded_sample_data']:
                 df = pd.read_csv(st.session_state['csv_path'])
+                meas_columns = defaultdict(list)
+                with open(st.session_state['meas_path']) as f:
+                    meas_data = csv.reader(f, delimiter=delimiter_type_meas)
+                    for skip in range(23):
+                        next(meas_data)
+                    for row in meas_data:
+                        for (i, v) in enumerate(row):
+                            meas_columns[i].append(v)
+                df_meas = pd.DataFrame(meas_columns)
             else:
                 st.warning("Something went wrong with file upload/load!")
-            df.plot()
-            st.pyplot(fig=plt)
+            df1 = df_meas[1].apply(pd.to_numeric)
+            df2 = df_meas[2].apply(pd.to_numeric)
+            df3 = df_meas[3].apply(pd.to_numeric)
+            fig, ax = plt.subplots(4, 1, figsize=(11, 22))
+            matplotlib.pyplot.subplots_adjust(wspace=0.5, hspace=0.5)
+            ax1 = plt.subplot(411)
+            ax2 = plt.subplot(412)
+            ax3 = plt.subplot(413)
+            ax4 = plt.subplot(414)
+            df.plot(ax=ax1)
+            df1.plot(ax=ax2, title='Voltage')
+            df2.plot(ax=ax3, title='Current')
+            df3.plot(ax=ax4, title='Resistance')
+            st.pyplot(fig=plt, )
         else:
             st.subheader("First you need to upload data or you can click to Load Sample Data button!")
 
