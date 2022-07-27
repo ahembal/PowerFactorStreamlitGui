@@ -58,7 +58,9 @@ def main_run():
     skip_temp = streamlit.session_state['input_variables']['skip_temp']  # Number of rows, that will be skipped at the beginning of Temperature data file
 
     ###########  PRINTING INPUT VARIABLES ##############################
-    if show_summary == False:
+    if not show_summary:
+        if not os.path.exists(f'{cur_dir}/data/results/RESULTS.csv'):
+            os.mkdir(f'{cur_dir}/data/results')
         sys.stdout = open(f'{cur_dir}/data/results/RESULTS.csv', "w")
     print('------------   INPUT VARIABLES   ----------------')
     print('iv_len=', iv_len)
