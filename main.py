@@ -95,7 +95,7 @@ def main():
         files = os.listdir(f'{cur_dir}/data/results')
         files = [f'{cur_dir}/data/results/{file}' for file in files]
         files_input = os.listdir(f'{cur_dir}/data/input/uploaded/')
-        files_input = [f'{cur_dir}/data/results/{file}' for file in files_input]
+        files_input = [f'{cur_dir}/data/input/uploaded/{file}' for file in files_input]
         tobe_deleted_files = files + files_input
         for file in tobe_deleted_files:
             if os.path.exists(file):
