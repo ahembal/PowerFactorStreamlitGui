@@ -302,13 +302,13 @@ def main():
                             div.stButton > button:first-child {} </style>""",
                             unsafe_allow_html=True)
                 with open('data/results/RESULTS.csv') as f:
-                    st.download_button('Download RESULTS as CSV', f)  # Defaults to 'text/plain'
+                    st.download_button('Download RESULTS as CSV', f, file_name='RESULTS.csv')  # Defaults to 'text/plain'
             with col2:
                 st.markdown("""<style> 
                             div.stButton > button:first-child {} </style>""",
                             unsafe_allow_html=True)
                 with open('data/results/DATABASE_8.csv') as f:
-                    st.download_button('Download DATABASE_8', f)  # Defaults to 'text/plain'
+                    st.download_button('Download DATABASE_8', f, file_name='DATABASE_8.csv')  # Defaults to 'text/plain'
             with col3:
                 st.markdown("""<style> 
                             div.stButton > button:first-child { background-color: rgb(211, 77, 77); } </style>""",
