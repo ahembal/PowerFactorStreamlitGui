@@ -60,7 +60,7 @@ def main_run():
 
     ###########  PRINTING INPUT VARIABLES ##############################
     if not show_summary:
-        if not os.path.exists(f'{cur_dir}/data/results/RESULTS.csv'):
+        if not os.path.exists(f'{cur_dir}/data/results'):
             os.mkdir(f'{cur_dir}/data/results')
         sys.stdout = open(f'{cur_dir}/data/results/RESULTS.csv', "w")
     print('------------   INPUT VARIABLES   ----------------')

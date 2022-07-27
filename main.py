@@ -141,7 +141,7 @@ def main():
             st.session_state['meas_path'] = f'{cur_dir}/data/input/sample/meas'
             st.session_state['csv_path'] = f'{cur_dir}/data/input/sample/Temp.csv'
             st.session_state['loaded_sample_data'] = True
-    st.sidebar.write(st.session_state)
+    # st.sidebar.write(st.session_state)
 
     if choice == 'Plot Input Data':
         st.header("Visualize Input Data")
