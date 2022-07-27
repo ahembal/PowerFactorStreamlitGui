@@ -1,9 +1,9 @@
 import os
 
-import streamlit
 
 
 def main_run():
+    import streamlit as st
     import csv
     import numpy
     from collections import defaultdict
@@ -17,24 +17,25 @@ def main_run():
 
     ######################### INPUT VARIABLES  ######################################
 
-    iv_len = streamlit.session_state['input_variables']['iv_len']   # number of data points in one IVC, 0-1-3-5
-    zero_bias_point = streamlit.session_state['input_variables']['zero_bias_point']  # 1 or 0 depending on if there is an extra point
-    interp_len = streamlit.session_state['input_variables']['interp_len']  # interpolation length - rec value around the number of measured IVCs
-    smooth_param_iv = streamlit.session_state['input_variables']['smooth_param_iv']  # gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10
-    smooth_param_temp = streamlit.session_state['input_variables']['smooth_param_temp']  # gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10
-    dvdt_polyfit_order = streamlit.session_state['input_variables']['dvdt_polyfit_order']  # Order of the polynomil fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
-    seebeck_polyfit_order = streamlit.session_state['input_variables']['seebeck_polyfit_order']  # Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
-    film_thickness_micrometer = streamlit.session_state['input_variables']['film_thickness_micrometer']  # Film thickness in the unit of micrometer, for Power Factor calculations
-    img_dpi = streamlit.session_state['input_variables']['img_dpi']  # Resolution of the saved images
-    img_show = streamlit.session_state['input_variables']['img_show']  # Show images before saving, True or False
-    show_summary = streamlit.session_state['input_variables']['show_summary']  # Save summary
-    delimiter_csv_file = streamlit.session_state['input_variables']['delimiter_csv_file']  # Delimiter type for created text files (not for the IVC or Temp files)
-    fig_no = streamlit.session_state['input_variables']['fig_no']  # Starting value for the figure num, rec value 0
+    iv_len = st.session_state['input_variables']['iv_len']   # number of data points in one IVC, 0-1-3-5
+    zero_bias_point = st.session_state['input_variables']['zero_bias_point']  # 1 or 0 depending on if there is an extra point
+    interp_len = st.session_state['input_variables']['interp_len']  # interpolation length - rec value around the number of measured IVCs
+    smooth_param_iv = st.session_state['input_variables']['smooth_param_iv']  # gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10
+    smooth_param_temp = st.session_state['input_variables']['smooth_param_temp']  # gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10
+    dvdt_polyfit_order = st.session_state['input_variables']['dvdt_polyfit_order']  # Order of the polynomil fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
+    seebeck_polyfit_order = st.session_state['input_variables']['seebeck_polyfit_order']  # Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
+    film_thickness_micrometer = st.session_state['input_variables']['film_thickness_micrometer']  # Film thickness in the unit of micrometer, for Power Factor calculations
+    img_dpi = st.session_state['input_variables']['img_dpi']  # Resolution of the saved images
+    img_show = st.session_state['input_variables']['img_show']  # Show images before saving, True or False
+    show_summary = st.session_state['input_variables']['show_summary']  # Save summary
+    delimiter_csv_file = st.session_state['input_variables']['delimiter_csv_file']  # Delimiter type for created text files (not for the IVC or Temp files)
+    fig_no = st.session_state['input_variables']['fig_no']  # Starting value for the figure num, rec value 0
 
     ######################## INPUT FILES STRUCTURE  ################################
     cur_dir = os.getcwd()
-    File_name_meas = f'{cur_dir}/data/input/uploaded/meas'  # Name of the IVC data file
-    File_name_temp = f'{cur_dir}/data/input/uploaded/Temp.csv'  # Name of the Temperature data file
+
+    File_name_meas = st.session_state['meas_path']  # Name of the IVC data file
+    File_name_temp = st.session_state['csv_path']  # Name of the Temperature data file
 
     # File_name_meas='meas_neg.txt'
     # File_name_meas='meas_only_iv'
@@ -44,18 +45,18 @@ def main_run():
     # File_name_temp='Temp_long.csv'
     ####################################
 
-    delimiter_type_meas = streamlit.session_state['input_variables']['delimiter_type_meas']  # Delimiter type the IVC data file
-    Time_index = streamlit.session_state['input_variables']['Time_index']  # Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    Voltage_index = streamlit.session_state['input_variables']['Voltage_index']  # Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    Current_index = streamlit.session_state['input_variables']['Current_index']  # Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    Resistance_index = streamlit.session_state['input_variables']['Resistance_index']  # Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
-    skip_meas = streamlit.session_state['input_variables']['skip_meas']  # Number of rows, that will be skipped at the beginning of IVC data file
+    delimiter_type_meas = st.session_state['input_variables']['delimiter_type_meas']  # Delimiter type the IVC data file
+    Time_index = st.session_state['input_variables']['Time_index']  # Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    Voltage_index = st.session_state['input_variables']['Voltage_index']  # Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    Current_index = st.session_state['input_variables']['Current_index']  # Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    Resistance_index = st.session_state['input_variables']['Resistance_index']  # Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
+    skip_meas = st.session_state['input_variables']['skip_meas']  # Number of rows, that will be skipped at the beginning of IVC data file
 
-    delimiter_type_temp = streamlit.session_state['input_variables']['delimiter_type_temp']  # Delimiter type the Temperature data file
-    T_time_index = streamlit.session_state['input_variables']['T_time_index']  # Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)
-    T_low_index = streamlit.session_state['input_variables']['T_low_index']  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
-    T_high_index = streamlit.session_state['input_variables']['T_high_index']  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
-    skip_temp = streamlit.session_state['input_variables']['skip_temp']  # Number of rows, that will be skipped at the beginning of Temperature data file
+    delimiter_type_temp = st.session_state['input_variables']['delimiter_type_temp']  # Delimiter type the Temperature data file
+    T_time_index = st.session_state['input_variables']['T_time_index']  # Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)
+    T_low_index = st.session_state['input_variables']['T_low_index']  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
+    T_high_index = st.session_state['input_variables']['T_high_index']  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
+    skip_temp = st.session_state['input_variables']['skip_temp']  # Number of rows, that will be skipped at the beginning of Temperature data file
 
     ###########  PRINTING INPUT VARIABLES ##############################
     if not show_summary:
