@@ -82,31 +82,27 @@ def reload_def_params():
 
 
 def main():
-    delimiter_type_meas = '\t'
+    placeholder = st.empty()
     cur_dir = os.getcwd()
-    if not os.path.exists(f"{cur_dir}/data/input/uploaded"):
-        os.mkdir(f"{cur_dir}/data/input/uploaded")
+    required_paths = ['data', 'data/input', 'data/results']
+    check_list = [(os.path.exists(i), i) for i in [cur_dir+'/'+i for i in required_paths]]
+    if False in check_list:
+        false_list = [i for i in check_list if i[0] is False]
+        for i in false_list:
+            os.mkdir(i[1])
 
     st.sidebar.title("Power Factor Calculation")
     activities = ["About", "Plot Input Data", "Tune The Parameters", "Analysis & Results", "Session Info"]
     choice = st.sidebar.selectbox("Please Select Activities", activities)
 
     def clean_upload_dir():
-        files = os.listdir(f'{cur_dir}/data/results')
-        files = [f'{cur_dir}/data/results/{file}' for file in files]
-        files_input = os.listdir(f'{cur_dir}/data/input/uploaded/')
+        files_input = os.listdir(f'{cur_dir}/data/input/uploaded')
         files_input = [f'{cur_dir}/data/input/uploaded/{file}' for file in files_input]
-        tobe_deleted_files = files + files_input
+        tobe_deleted_files = files_input
         for file in tobe_deleted_files:
             if os.path.exists(file):
                 os.remove(file)
-        st.session_state['results'] = False
-        st.session_state['meas_path'] = None
-        st.session_state['csv_path'] = None
         st.session_state['uploaded_input_data'] = False
-        st.session_state['loaded_sample_data'] = False
-        st.session_state['results'] = None
-        st.session_state['execute'] = None
 
     def return_format(delimeter):
         if delimeter == "\t":
@@ -117,15 +113,12 @@ def main():
     st.sidebar.subheader("File Upload")
     data_meas = st.sidebar.file_uploader("Upload a meas file")
     data_csv = st.sidebar.file_uploader("Upload a csv file", type=["csv", "txt"])
+
     if data_meas and data_csv:
-        st.sidebar.text("Now you can select \n"
+        st.sidebar.success("Now you can select \n"
                         "Analysis Result section \n"
                         "from drow-down-menu and \n"
                         "execute the code!")
-        if st.sidebar.button('Delete uploaded files!'):
-            st.sidebar.warning('Are you sure you want to delete files and all the results?')
-            st.sidebar.button('Yes!', on_click=clean_upload_dir)
-
         st.session_state['meas_path'] = f"{cur_dir}/data/input/uploaded/meas"
         st.session_state['csv_path'] = f"{cur_dir}/data/input/uploaded/Temp.csv"
         st.session_state['uploaded_input_data'] = True
@@ -136,12 +129,15 @@ def main():
             f.write(data_meas.getbuffer())
         with open(f"{cur_dir}/data/input/uploaded/Temp.csv", "wb") as f:
             f.write(data_csv.getbuffer())
-    elif not st.session_state['loaded_sample_data']:
+    else:
+        clean_upload_dir()
+
+    if not st.session_state['loaded_sample_data'] and not st.session_state['uploaded_input_data']:
         if st.sidebar.button("Load Sample Data"):
             st.session_state['meas_path'] = f'{cur_dir}/data/input/sample/meas'
             st.session_state['csv_path'] = f'{cur_dir}/data/input/sample/Temp.csv'
             st.session_state['loaded_sample_data'] = True
-    # st.sidebar.write(st.session_state)
+
 
     if choice == 'Plot Input Data':
         st.header("Visualize Input Data")
@@ -151,7 +147,7 @@ def main():
                 df = pd.read_csv(st.session_state['csv_path'])
                 meas_columns = defaultdict(list)
                 with open(st.session_state['meas_path']) as f:
-                    meas_data = csv.reader(f, delimiter=delimiter_type_meas)
+                    meas_data = csv.reader(f, delimiter=st.session_state['input_variables']['delimiter_type_meas'])
                     for skip in range(23):
                         next(meas_data)
                     for row in meas_data:
@@ -162,7 +158,7 @@ def main():
                 df = pd.read_csv(st.session_state['csv_path'])
                 meas_columns = defaultdict(list)
                 with open(st.session_state['meas_path']) as f:
-                    meas_data = csv.reader(f, delimiter=delimiter_type_meas)
+                    meas_data = csv.reader(f, delimiter=st.session_state['input_variables']['delimiter_type_meas'])
                     for skip in range(23):
                         next(meas_data)
                     for row in meas_data:
@@ -320,7 +316,7 @@ def main():
             st.subheader("CSV context:")
             # text, csv = split_result_csv()
             with open('data/results/RESULTS.csv') as f:
-                meas_data = csv.reader(f, delimiter=delimiter_type_meas)
+                meas_data = csv.reader(f, delimiter=st.session_state['input_variables']['delimiter_type_meas'])
                 for row in meas_data:
                     row = str(row).replace("[", " ").replace("]", " ").replace("'", " ").replace('"', ' ')
                     st.text(row)
