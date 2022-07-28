@@ -82,7 +82,6 @@ def reload_def_params():
 
 
 def main():
-    placeholder = st.empty()
     cur_dir = os.getcwd()
     required_paths = ['data', 'data/input', 'data/results']
     check_list = [(os.path.exists(i), i) for i in [cur_dir+'/'+i for i in required_paths]]
@@ -260,9 +259,9 @@ def main():
         st.subheader("Purpose:")
         st.write("Purpose of this software is to help researchers to run explore and visualize their experiment through this GUI.")
         st.subheader('Author: ')
-        st.write("Writer goes here!")
+        st.write("@adembjorn / @borekson & @ahembal")
         st.subheader('Contact: ')
-        st.write("Contact information goes here!")
+        st.write("bjorn@borekson.com & balsever@kth.se")
         st.subheader('Usage: ')
         st.write("**To run with sample data:**")
         st.write("First, push the *Load Sample Data* button at the bottom of sidebar. "
