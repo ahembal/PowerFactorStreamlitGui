@@ -95,12 +95,13 @@ def main():
     choice = st.sidebar.selectbox("Please Select Activities", activities)
 
     def clean_upload_dir():
-        files_input = os.listdir(f'{cur_dir}/data/input/uploaded')
-        files_input = [f'{cur_dir}/data/input/uploaded/{file}' for file in files_input]
-        tobe_deleted_files = files_input
-        for file in tobe_deleted_files:
-            if os.path.exists(file):
-                os.remove(file)
+        if os.path.exists(f'{cur_dir}/data/input/uploaded'):
+            files_input = os.listdir(f'{cur_dir}/data/input/uploaded')
+            files_input = [f'{cur_dir}/data/input/uploaded/{file}' for file in files_input]
+            tobe_deleted_files = files_input
+            for file in tobe_deleted_files:
+                if os.path.exists(file):
+                    os.remove(file)
         st.session_state['uploaded_input_data'] = False
 
     def return_format(delimeter):
