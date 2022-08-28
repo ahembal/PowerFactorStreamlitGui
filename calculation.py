@@ -25,6 +25,8 @@ def main_run():
     dvdt_polyfit_order = st.session_state['input_variables']['dvdt_polyfit_order']  # Order of the polynomil fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
     seebeck_polyfit_order = st.session_state['input_variables']['seebeck_polyfit_order']  # Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit
     film_thickness_micrometer = st.session_state['input_variables']['film_thickness_micrometer']  # Film thickness in the unit of micrometer, for Power Factor calculations
+    film_width_micrometer = st.session_state['input_variables']['film_width_micrometer']  # Film thickness in the unit of micrometer, for Power Factor calculations
+    film_length_micrometer = st.session_state['input_variables']['film_length_micrometer']  # Film thickness in the unit of micrometer, for Power Factor calculations
     img_dpi = st.session_state['input_variables']['img_dpi']  # Resolution of the saved images
     img_show = st.session_state['input_variables']['img_show']  # Show images before saving, True or False
     show_summary = st.session_state['input_variables']['show_summary']  # Save summary
@@ -57,6 +59,8 @@ def main_run():
     T_low_index = st.session_state['input_variables']['T_low_index']  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
     T_high_index = st.session_state['input_variables']['T_high_index']  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
     skip_temp = st.session_state['input_variables']['skip_temp']  # Number of rows, that will be skipped at the beginning of Temperature data file
+
+
 
     ###########  PRINTING INPUT VARIABLES ##############################
     if not show_summary:
@@ -112,7 +116,7 @@ def main_run():
     # print('Resistance:',Resistance)
 
     ####### RAW MEAS DATA PLOTTING ###################
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 1
     plt.figure(fig_no, figsize=(17.5, 5))
     plt.subplot(131)
     plt.plot(Voltage, '-o')
@@ -173,7 +177,7 @@ def main_run():
 
     ######################   IVC PLOTS #################################
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 2
     plt.figure(fig_no, figsize=(17.5, 5))
     plt.subplot(131)
     for i in range(len(Voltage_2d)):
@@ -200,7 +204,7 @@ def main_run():
     csv_data = numpy.asarray([Voltage_2d_flat, Current_2d_flat, Resistance_2d_flat])
     csv_data_transpose = csv_data.transpose()
     variables = ['Voltage_2d', 'Current_2d', 'Resistance_2d']
-    with open(f'{cur_dir}/data/results/figure_%d.csv' % fig_no, 'a+') as f:
+    with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'a+') as f:
         header = csv.writer(f, delimiter=delimiter_csv_file)
         header.writerow(variables)
     with open(f'{cur_dir}/data/results/Figure_%d.csv' % fig_no, 'ab') as f:
@@ -243,7 +247,7 @@ def main_run():
         # Current_2d_interp[i,:] = interp_func_current(x_new)
         # Resistance_2d_interp[i,:] = interp_func_resistance(x_new)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 3
     plt.figure(fig_no, figsize=(17.5, 5))
     plt.subplot(131)
     for i in range(len(Voltage_2d_interp[:, 1])):
@@ -310,7 +314,7 @@ def main_run():
     if (sum_dif_Voltage < 0):
         Voltage_fit_interp_norm = Voltage_fit_interp_norm - max(Voltage_fit_interp_norm)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 4
     plt.figure(fig_no, figsize=(10.5, 5))
     plt.subplot(121)
     plt.plot(Voltage_fit, '-o')
@@ -336,7 +340,7 @@ def main_run():
     print(csv_data_transpose)
     #####################################################
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 5
     plt.figure(fig_no, figsize=(10.5, 5))
     plt.subplot(121)
     plt.plot(Voltage_fit_interp, '-o')
@@ -393,7 +397,7 @@ def main_run():
     Delta_T_interp = interp_func_temp(x_temp_new)
     T_high_interp = Delta_T_interp + min(T_low)
     ####### TEMP DATA PLOTTING ###################
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 6
     plt.figure(fig_no, figsize=(10, 12))
     plt.subplot(221)
     plt.plot(T_high, '-ro', label='T_high')
@@ -455,7 +459,7 @@ def main_run():
     Voltage_fit_interp_norm = Voltage_fit_interp_norm * 10 ** 6
     Voltage_2d_interp_norm = Voltage_2d_interp_norm * 10 ** 6
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 7
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         plt.plot(Delta_T_interp, Voltage_fit_interp_norm, 'o-', label='IV_fit')
@@ -513,7 +517,7 @@ def main_run():
     f_dvdt_Voltage_fit_interp_norm_smooth = np.poly1d(dvdt_Voltage_fit_interp_norm_smooth)
     print('Linear fit dv/dt (from IVC) = ', f_dvdt_Voltage_fit_interp_norm_smooth)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 8
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         plt.plot(Delta_T_interp_smooth, Voltage_fit_interp_norm_smooth, 'o')
@@ -570,7 +574,7 @@ def main_run():
 
     Delta_V_vs_Delta_T_2d = np.zeros((total_iv_len, interp_len))
     Delta_V_vs_Delta_T_interp = np.zeros(interp_len)
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 9
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         Delta_V_vs_Delta_T_interp = Voltage_fit_interp_norm_smooth / Delta_T_interp_smooth
@@ -607,7 +611,7 @@ def main_run():
     seebeck_Voltage_2d_interp_norm_smooth = np.zeros((total_iv_len, interp_len - 1))
     seebeck_Voltage_fit_interp_norm_smooth = diff(Voltage_fit_interp_norm_smooth) / diff(Delta_T_interp_smooth)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 10
     plt.figure(fig_no, figsize=(7.5, 15))
     plt.subplot(311)
     if (total_iv_len > 1):
@@ -694,7 +698,7 @@ def main_run():
     #####################################################
 
     ################ SEEBECK & IVC & TEMP PlOT NORMALIZED ######################################
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 11
     plt.figure(fig_no, figsize=(7.5, 15))
     plt.subplot(211)
     if (total_iv_len > 1):
@@ -737,7 +741,7 @@ def main_run():
     seebeck_Voltage_2d_interp_norm_smooth = np.zeros((total_iv_len, interp_len - 1))
     seebeck_Voltage_fit_interp_norm_smooth = diff(Voltage_fit_interp_norm_smooth) / diff(Delta_T_interp_smooth)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 12
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         plt.plot(T_high_interp[0:len(seebeck_Voltage_fit_interp_norm_smooth)],
@@ -780,7 +784,7 @@ def main_run():
     f_polyfit_seebeck_Voltage_fit_interp_norm_smooth = np.poly1d(polyfit_seebeck_Voltage_fit_interp_norm_smooth)
     print('Poly fit to Seebeck (from IVC) = ', f_polyfit_seebeck_Voltage_fit_interp_norm_smooth)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 13
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         plt.plot(T_high_interp[1:len(seebeck_Voltage_fit_interp_norm_smooth)],
@@ -827,7 +831,7 @@ def main_run():
     #####################################################
 
     ################ Resistance vs TEMP PLOT ######################################
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 14
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         # plt.plot(T_high_interp, Resistance_fit_interp,'-o',label='IV_fit_data')
@@ -860,7 +864,7 @@ def main_run():
     Conductivity_2d_interp = np.zeros((total_iv_len, interp_len))
     film_thickness_cm = film_thickness_micrometer / 10 ** (4)
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 15
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         Conductivity_fit_interp = 1 / (Resistance_fit_interp * film_thickness_cm)
@@ -896,7 +900,7 @@ def main_run():
     ########### POWER FACTOR  #################################
     PowerFactor_2d_interp = np.zeros((total_iv_len, interp_len - 1))
 
-    fig_no = fig_no + 1
+    fig_no = fig_no + 1  # 16
     plt.figure(fig_no, figsize=(7.5, 5))
     if (total_iv_len > 1):
         PowerFactor_fit_interp = seebeck_Voltage_fit_interp_norm_smooth ** 2 * Conductivity_fit_interp[0:len(

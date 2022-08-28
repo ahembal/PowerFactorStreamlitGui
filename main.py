@@ -3,6 +3,7 @@ import os
 # Core Pkgs
 from collections import defaultdict
 
+import pandas
 import streamlit as st
 
 # EDA Pkgs
@@ -31,6 +32,8 @@ if 'input_variables' not in st.session_state: st.session_state['input_variables'
     'dvdt_polyfit_order': 1,
     'seebeck_polyfit_order': 0,
     'film_thickness_micrometer': 50,
+    'film_width_micrometer': 50,
+    'film_length_micrometer': 50,
     'img_dpi': 300,
     'img_show': False,
     'show_summary': False,
@@ -49,6 +52,7 @@ if 'input_variables' not in st.session_state: st.session_state['input_variables'
     'skip_temp': 1
 
 }
+if 'plot_returns' not in st.session_state: st.session_state['plot_returns'] = {}
 
 
 def reload_def_params():
@@ -61,6 +65,8 @@ def reload_def_params():
         'dvdt_polyfit_order': 1,
         'seebeck_polyfit_order': 0,
         'film_thickness_micrometer': 50,
+        'film_width_micrometer': 50,
+        'film_length_micrometer': 50,
         'img_dpi': 300,
         'img_show': False,
         'show_summary': False,
@@ -190,46 +196,93 @@ def main():
 
         ######################### INPUT VARIABLES  ######################################
         st.subheader("Input Variables")
-        st.session_state['input_variables']['iv_len'] = st.selectbox('IV length', [0, 1, 3, 5], index=[0, 1, 3, 5].index(st.session_state['input_variables']['iv_len']), help="number of data points in one IVC, 0-1-3-5")
-        st.session_state['input_variables']['zero_bias_point'] = st.radio('Zero Bias Point', [0, 1], index=[0, 1].index(st.session_state['input_variables']['zero_bias_point']), horizontal=True, help="1 or 0 depending on if there is an extra point")
-        st.session_state['input_variables']['interp_len'] = st.slider('Interpolation Length', 50, 150, value=st.session_state['input_variables']['interp_len'], help="interpolation length - rec value around the number of measured IVCs")
-        st.session_state['input_variables']['smooth_param_iv'] = st.number_input('Smooth Param IV', 0, 10, value=st.session_state['input_variables']['smooth_param_iv'], help="gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10")
-        st.session_state['input_variables']['smooth_param_temp'] = st.number_input('Smooth Param Temp', 0, 10, value=st.session_state['input_variables']['smooth_param_temp'], help="gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10")
-        st.session_state['input_variables']['dvdt_polyfit_order'] = st.selectbox('Order of the Polynomial fit', [0, 1, 2], index=[0, 1, 2].index(st.session_state['input_variables']['dvdt_polyfit_order']), help="Order of the polynomial fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit")
-        st.session_state['input_variables']['seebeck_polyfit_order'] = st.selectbox('Order of the Polynomial fit', [0, 1, 2], index=[0, 1, 2].index(st.session_state['input_variables']['seebeck_polyfit_order']), help="Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit")
-        st.session_state['input_variables']['film_thickness_micrometer'] = st.slider('Film Thickness micrometer', 0, 100, value=st.session_state['input_variables']['film_thickness_micrometer'], help="Film thickness in the unit of micrometer, for Power Factor calculations")
-        st.session_state['input_variables']['img_dpi'] = st.number_input('Img Dpi', 200, 400, value=st.session_state['input_variables']['img_dpi'], help="Resolution of the saved images")
-        st.session_state['input_variables']['img_show'] = st.radio('Img Show', [False, True], index=[False, True].index(st.session_state['input_variables']['img_show']), horizontal=True, help="Show images before saving, True or False")
-        st.session_state['input_variables']['show_summary'] = st.radio('Img Show', [False, True], index=[False, True].index(st.session_state['input_variables']['show_summary']), horizontal=True, help="Save summary")
-        st.session_state['input_variables']['delimiter_csv_file'] = st.selectbox('Delimiter type', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_csv_file']), format_func=return_format, help="Delimiter type for created text files (not for the IVC or Temp files)")
-        st.session_state['input_variables']['fig_no'] = st.number_input('Fig no', 0, 100, value=st.session_state['input_variables']['fig_no'], help="Starting value for the figure num, rec value 0")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.session_state['input_variables']['film_thickness_micrometer'] = st.number_input('Film Thickness micrometer', 0, 100, value=st.session_state['input_variables']['film_thickness_micrometer'], help="Film thickness in the unit of micrometer, for Power Factor calculations")
+        with col2:
+            st.session_state['input_variables']['film_width_micrometer'] = st.number_input('Film Width micrometer', 0, 100, help="Film thickness in the unit of micrometer, for Power Factor calculations")
+        with col3:
+            st.session_state['input_variables']['film_length_micrometer'] = st.number_input('Film Length micrometer', 0, 100, help="Film thickness in the unit of micrometer, for Power Factor calculations")
+
+        # st.session_state['input_variables']['iv_len'] = st.selectbox('IV length', [0, 1, 3, 5], index=[0, 1, 3, 5].index(st.session_state['input_variables']['iv_len']), help="number of data points in one IVC, 0-1-3-5")
+        # st.session_state['input_variables']['zero_bias_point'] = st.radio('Zero Bias Point', [0, 1], index=[0, 1].index(st.session_state['input_variables']['zero_bias_point']), horizontal=True, help="1 or 0 depending on if there is an extra point")
+        # st.session_state['input_variables']['interp_len'] = st.slider('Interpolation Length', 50, 150, value=st.session_state['input_variables']['interp_len'], help="interpolation length - rec value around the number of measured IVCs")
+        # st.session_state['input_variables']['smooth_param_iv'] = st.number_input('Smooth Param IV', 0, 10, value=st.session_state['input_variables']['smooth_param_iv'], help="gaussian smoothing parameter for the IV data , min. rec value 4 - 10 or interp_len/10")
+        # st.session_state['input_variables']['smooth_param_temp'] = st.number_input('Smooth Param Temp', 0, 10, value=st.session_state['input_variables']['smooth_param_temp'], help="gaussian smoothing parameter for the Temp data , min. rec value 4 - 10 or interp_len/10")
+        # st.session_state['input_variables']['dvdt_polyfit_order'] = st.selectbox('Order of the Polynomial fit', [0, 1, 2], index=[0, 1, 2].index(st.session_state['input_variables']['dvdt_polyfit_order']), help="Order of the polynomial fit for DV/DT plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit")
+        # st.session_state['input_variables']['seebeck_polyfit_order'] = st.selectbox('Order of the Polynomial fit', [0, 1, 2], index=[0, 1, 2].index(st.session_state['input_variables']['seebeck_polyfit_order']), help="Order of the polynomil fit for Seebeck plot, 0 for average, 1 for linear fit, 2 for 2nd degree poly fit")
+        # st.session_state['input_variables']['img_dpi'] = st.number_input('Img Dpi', 200, 400, value=st.session_state['input_variables']['img_dpi'], help="Resolution of the saved images")
+        # st.session_state['input_variables']['img_show'] = st.radio('Img Show', [False, True], index=[False, True].index(st.session_state['input_variables']['img_show']), horizontal=True, help="Show images before saving, True or False")
+        # st.session_state['input_variables']['show_summary'] = st.radio('Img Show', [False, True], index=[False, True].index(st.session_state['input_variables']['show_summary']), horizontal=True, help="Save summary")
+        # st.session_state['input_variables']['delimiter_csv_file'] = st.selectbox('Delimiter type', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_csv_file']), format_func=return_format, help="Delimiter type for created text files (not for the IVC or Temp files)")
+        # st.session_state['input_variables']['fig_no'] = st.number_input('Fig no', 0, 100, value=st.session_state['input_variables']['fig_no'], help="Starting value for the figure num, rec value 0")
 
         ######################### OTHER VARIABLES  ######################################
-        st.subheader("Other Variables")
-        st.write("Meas File variables:")
-        st.session_state['input_variables']['delimiter_type_meas'] = st.selectbox('Delimiter type meas', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_type_meas']), format_func=return_format, help="Delimiter type the IVC data file")
-        st.session_state['input_variables']['Time_index'] = st.number_input('Time Index', 0, 5, value=st.session_state['input_variables']['Time_index'], help="Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
-        st.session_state['input_variables']['Voltage_index'] = st.number_input('Voltage Index', 0, 5, value=st.session_state['input_variables']['Voltage_index'], help="Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
-        st.session_state['input_variables']['Current_index'] = st.number_input('Current Index', 0, 5, value=st.session_state['input_variables']['Current_index'], help="Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
-        st.session_state['input_variables']['Resistance_index'] = st.number_input('Resistance Index', 0, 5, value=st.session_state['input_variables']['Resistance_index'], help="Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
-        st.session_state['input_variables']['skip_meas'] = st.number_input('Number of Rows to skip in meas file', 0, 30, value=st.session_state['input_variables']['skip_meas'], help="Number of rows, that will be skipped at the beginning of IVC data file")
-        st.write("-------------------------------------------------------------------------")
-        st.write("Temp File variables:")
-        st.session_state['input_variables']['delimiter_type_temp'] = st.selectbox('Delimiter type temp', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_type_temp']), format_func=return_format, help="Delimiter type the Temperature data file")
-        st.session_state['input_variables']['T_time_index'] = st.number_input('T time Index', 0, 5, value=st.session_state['input_variables']['T_time_index'], help="Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)")
-        st.session_state['input_variables']['T_low_index'] = st.number_input('T low Index', 0, 5, value=st.session_state['input_variables']['T_low_index'], help="Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)")
-        st.session_state['input_variables']['T_high_index'] = st.number_input('T high Index', 0, 5, value=st.session_state['input_variables']['T_high_index'], help="Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc")
-        st.session_state['input_variables']['skip_temp'] = st.number_input('Number of Rows to skip in temp file', 0, 30, value=st.session_state['input_variables']['skip_temp'], help="Number of rows, that will be skipped at the beginning of Temperature data file")
+        # st.subheader("Other Variables")
+        # st.write("Meas File variables:")
+        # st.session_state['input_variables']['delimiter_type_meas'] = st.selectbox('Delimiter type meas', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_type_meas']), format_func=return_format, help="Delimiter type the IVC data file")
+        # st.session_state['input_variables']['Time_index'] = st.number_input('Time Index', 0, 5, value=st.session_state['input_variables']['Time_index'], help="Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        # st.session_state['input_variables']['Voltage_index'] = st.number_input('Voltage Index', 0, 5, value=st.session_state['input_variables']['Voltage_index'], help="Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        # st.session_state['input_variables']['Current_index'] = st.number_input('Current Index', 0, 5, value=st.session_state['input_variables']['Current_index'], help="Column number of the Current data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        # st.session_state['input_variables']['Resistance_index'] = st.number_input('Resistance Index', 0, 5, value=st.session_state['input_variables']['Resistance_index'], help="Column number of the Resistance data in the  IVC file (0 means column 1, 1 means column 2, etc ...)")
+        # st.session_state['input_variables']['skip_meas'] = st.number_input('Number of Rows to skip in meas file', 0, 30, value=st.session_state['input_variables']['skip_meas'], help="Number of rows, that will be skipped at the beginning of IVC data file")
+        # st.write("-------------------------------------------------------------------------")
+        # st.write("Temp File variables:")
+        # st.session_state['input_variables']['delimiter_type_temp'] = st.selectbox('Delimiter type temp', ["\t", ","], index=["\t", ","].index(st.session_state['input_variables']['delimiter_type_temp']), format_func=return_format, help="Delimiter type the Temperature data file")
+        # st.session_state['input_variables']['T_time_index'] = st.number_input('T time Index', 0, 5, value=st.session_state['input_variables']['T_time_index'], help="Column number of the Time Index in the Temperature file (0 means column 1, 1 means column 2, etc ...)")
+        # st.session_state['input_variables']['T_low_index'] = st.number_input('T low Index', 0, 5, value=st.session_state['input_variables']['T_low_index'], help="Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)")
+        # st.session_state['input_variables']['T_high_index'] = st.number_input('T high Index', 0, 5, value=st.session_state['input_variables']['T_high_index'], help="Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc")
+        # st.session_state['input_variables']['skip_temp'] = st.number_input('Number of Rows to skip in temp file', 0, 30, value=st.session_state['input_variables']['skip_temp'], help="Number of rows, that will be skipped at the beginning of Temperature data file")
 
     elif choice == 'Analysis & Results':
         st.subheader("Exploratory Data Analysis")
 
         if st.session_state['results']:
             fig_list = [i for i in os.listdir(f"{cur_dir}/data/results") if ".png" in i]
+            csv_list = [i for i in os.listdir(f"{cur_dir}/data/results") if "Figure" in i]
             fig_list = sorted(fig_list, key=lambda x: int(x.split("_")[1].split('.')[0]))
+
             for i in fig_list:
+                st.title(i.split('.')[0])
                 fig = plt.imread(f"{cur_dir}/data/results/{i}")
-                st.subheader(i.split('.')[0])
+                number = i.split('.')[0].split('_')[1]
+                search_text = f"Figure_{number}.csv"
+                search_text_2 = f"Figure_{number}_part"
+
+                csvs = [c for c in csv_list if search_text in c or search_text_2 in c]
+                # st.write(csvs)
+
+                if len(csvs) == 1:
+                    with open(f"{cur_dir}/data/results/{csvs[0]}") as f:
+                            st.download_button(f'{csvs[0]}', f, file_name=csvs[0])  # Defaults to 'text/plain'
+                elif len(csvs) == 2:
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        with open(f"{cur_dir}/data/results/{csvs[0]}") as f:
+                            st.download_button(f'{csvs[0]}', f, file_name=csvs[0])
+                    with col2:
+                        with open(f"{cur_dir}/data/results/{csvs[1]}") as f:
+                            st.download_button(f'{csvs[1]}', f, file_name=csvs[1])
+
+                elif len(csvs) == 3:
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        with open(f"{cur_dir}/data/results/{csvs[0]}") as f:
+                            st.download_button(f'{csvs[0]}', f, file_name=csvs[0])
+                    with col2:
+                        with open(f"{cur_dir}/data/results/{csvs[1]}") as f:
+                            st.download_button(f'{csvs[1]}', f, file_name=csvs[1])
+                    with col3:
+                        with open(f"{cur_dir}/data/results/{csvs[2]}") as f:
+                            st.download_button(f'{csvs[2]}', f, file_name=csvs[2])
+                # col1, col2 = st.columns(2)
+                # with col1:
+                #     st.subheader(i.split('.')[0])
+                # with col2:
+                #     for c in csvs:
+                #         with open(f"{cur_dir}/data/results/{c}") as f:
+                #             st.download_button(f'Download CSV - {c}', f,
+                #                                file_name='RESULTS.csv')  # Defaults to 'text/plain'
                 st.image(fig)
 
         elif st.session_state['uploaded_input_data'] or st.session_state['loaded_sample_data']:
