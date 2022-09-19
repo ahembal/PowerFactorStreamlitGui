@@ -68,13 +68,13 @@ def main_run():
     print('img_dpi=', img_dpi)
     print('img_show = ', img_show)
     print('show_summary = ', show_summary)
-    File_name_meas = '/home/ahembal/PycharmProjects/Albanova/pwrfactStreamlit/data/input/sample/meas'
-    delimiter_type_meas = '\t'
-    skip_meas = 23
-    Time_index = 0
-    Voltage_index = 1
-    Current_index = 2
-    Resistance_index = 3
+    # File_name_meas = '/home/ahembal/PycharmProjects/Albanova/pwrfactStreamlit/data/input/sample/meas'
+    # delimiter_type_meas = '\t'
+    # skip_meas = 23
+    # Time_index = 0
+    # Voltage_index = 1
+    # Current_index = 2
+    # Resistance_index = 3
     ########### LOADING MEAS DATA FILE (IVC) ############################
     meas_columns = defaultdict(list)  # each value in each column is appended to a list
     with open(File_name_meas) as f:
