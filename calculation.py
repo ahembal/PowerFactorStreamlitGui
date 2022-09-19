@@ -1,7 +1,6 @@
 import os
 
 
-
 def main_run():
     import streamlit as st
     import csv
@@ -35,18 +34,10 @@ def main_run():
 
     ######################## INPUT FILES STRUCTURE  ################################
     cur_dir = os.getcwd()
-
     File_name_meas = st.session_state['meas_path']  # Name of the IVC data file
     File_name_temp = st.session_state['csv_path']  # Name of the Temperature data file
 
-    # File_name_meas='meas_neg.txt'
-    # File_name_meas='meas_only_iv'
-    # File_name_meas='meas_single_point'
-
-    # File_name_meas='meas_long.txt'
-    # File_name_temp='Temp_long.csv'
     ####################################
-
     delimiter_type_meas = st.session_state['input_variables']['delimiter_type_meas']  # Delimiter type the IVC data file
     Time_index = st.session_state['input_variables']['Time_index']  # Column number of the Time Index in the  IVC file (0 means column 1, 1 means column 2, etc ...)
     Voltage_index = st.session_state['input_variables']['Voltage_index']  # Column number of the Voltage data in the  IVC file (0 means column 1, 1 means column 2, etc ...)
@@ -59,8 +50,6 @@ def main_run():
     T_low_index = st.session_state['input_variables']['T_low_index']  # Column number of the Cold-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc ...)
     T_high_index = st.session_state['input_variables']['T_high_index']  # Column number of the Hot-side measurement in the Temperature file (0 means column 1, 1 means column 2, etc
     skip_temp = st.session_state['input_variables']['skip_temp']  # Number of rows, that will be skipped at the beginning of Temperature data file
-
-
 
     ###########  PRINTING INPUT VARIABLES ##############################
     if not show_summary:
@@ -79,6 +68,13 @@ def main_run():
     print('img_dpi=', img_dpi)
     print('img_show = ', img_show)
     print('show_summary = ', show_summary)
+    File_name_meas = '/home/ahembal/PycharmProjects/Albanova/pwrfactStreamlit/data/input/sample/meas'
+    delimiter_type_meas = '\t'
+    skip_meas = 23
+    Time_index = 0
+    Voltage_index = 1
+    Current_index = 2
+    Resistance_index = 3
     ########### LOADING MEAS DATA FILE (IVC) ############################
     meas_columns = defaultdict(list)  # each value in each column is appended to a list
     with open(File_name_meas) as f:
@@ -96,24 +92,12 @@ def main_run():
     Current = np.array(list(np.float_(meas_columns[Current_index])))
     Resistance = np.array(list(np.float_(meas_columns[Resistance_index])))
     sum_dif_Voltage = sum(diff(Voltage))
-    # print('Time:',Time)
 
     print('sum_dif_Voltage:', sum_dif_Voltage)
     if (sum_dif_Voltage > 0):
         print('Positive Seebeck factor')
     if (sum_dif_Voltage < 0):
         print('Negative Seebeck factor')
-
-    ########## Creating Table ############
-    # headers = ['Voltage', 'Current', 'Resistance']
-    # data= [Voltage,Current,Resistance]
-    # list_1 = data.tolist()
-    # table = columnar(list_1, headers, no_borders=True)
-    # print(table)
-
-    # print('Voltage:',Voltage)
-    # print('Current:',Current)
-    # print('Resistance:',Resistance)
 
     ####### RAW MEAS DATA PLOTTING ###################
     fig_no = fig_no + 1  # 1
@@ -153,27 +137,19 @@ def main_run():
         sys.exit()
 
     iv_number = math.floor(len(Voltage) / total_iv_len)
-    # print('total_iv_len=',total_iv_len)
     print('There are %d different IVC lines.' % total_iv_len)
     print('IVCs consist of %d data points.' % iv_number)
 
     Voltage_2d = np.zeros((total_iv_len, iv_number))
     Current_2d = np.zeros((total_iv_len, iv_number))
     Resistance_2d = np.zeros((total_iv_len, iv_number))
-
+    #TODO ASK FOR EXPLANATION
     for k in range(iv_number):
         count = count + 1
         for i in range(total_iv_len):
-            # print('count=',count)
-            # print('total_iv_len=',total_iv_len)
-            # print('index=',total_iv_len*count+i)
             Voltage_2d[i][count] = Voltage[total_iv_len * count + i]
             Current_2d[i][count] = Current[total_iv_len * count + i]
             Resistance_2d[i][count] = Resistance[total_iv_len * count + i]
-
-            # Voltage_2d[i][count]=0
-            # print(i)
-    # print('Voltage_2d=', Voltage_2d)
 
     ######################   IVC PLOTS #################################
 
@@ -181,15 +157,15 @@ def main_run():
     plt.figure(fig_no, figsize=(17.5, 5))
     plt.subplot(131)
     for i in range(len(Voltage_2d)):
-        plt.plot(Voltage_2d[i,], '-o', label='IV_point %d' % i)
+        plt.plot(Voltage_2d[i, ], '-o', label='IV_point %d' % i)
     plt.title("Voltage (V)")
     plt.subplot(132)
     for i in range(len(Voltage_2d)):
-        plt.plot(Current_2d[i,], '-o', label='IV_point %d' % i)
+        plt.plot(Current_2d[i, ], '-o', label='IV_point %d' % i)
     plt.title("Current (A)")
     plt.subplot(133)
     for i in range(len(Voltage_2d)):
-        plt.plot(Resistance_2d[i,], '-o', label='IV_point %d' % i)
+        plt.plot(Resistance_2d[i, ], '-o', label='IV_point %d' % i)
     plt.title("Resistance ($\Omega$)")
     plt.legend()
     plt.savefig(f'{cur_dir}/data/results/Fig_%d.png' % fig_no, dpi=img_dpi)
@@ -219,18 +195,12 @@ def main_run():
     Voltage_2d_interp_norm = np.zeros((total_iv_len, interp_len))
     Current_2d_interp = np.zeros((total_iv_len, interp_len))
     Resistance_2d_interp = np.zeros((total_iv_len, interp_len))
-    # columns = len(an_array[0])
-    # print('len_v_x=',len(Voltage_2d))
-    # print('len_v_y=',len(Voltage_2d[0]))
-
+    #TODO ASK FOR EXPLANATION
     x_old = np.linspace(0, len(Voltage_2d[0]) - 1, num=len(Voltage_2d[0]))
     x_new = np.linspace(0, len(Voltage_2d[0]) - 1, num=len(Voltage_2d_interp[0]))
 
     print('Interpolation length is: ', len(x_new))
-    # print('len_Voltage_2d_interp[0]=',len(Voltage_2d_interp[0]))
 
-    # print('x_old=',x_old)
-    # print('Voltage_2d_interp=',Voltage_2d_interp)
     for i in range(len(Voltage_2d)):
         interp_func_voltage = interp1d(x_old, Voltage_2d[i, :], kind='cubic')
         Voltage_2d_interp[i, :] = interp_func_voltage(x_new)
@@ -241,11 +211,6 @@ def main_run():
         Resistance_2d_interp[i, :] = interp_func_resistance(x_new)
         if (sum_dif_Voltage < 0):
             Voltage_2d_interp_norm[i, :] = Voltage_2d_interp_norm[i, :] - max(Voltage_2d_interp_norm[i, :])
-
-        # print('interp_func_voltage',interp_func_voltage)
-        # Voltage_2d_interp[i,:] = interp_func_voltage(x_new)
-        # Current_2d_interp[i,:] = interp_func_current(x_new)
-        # Resistance_2d_interp[i,:] = interp_func_resistance(x_new)
 
     fig_no = fig_no + 1  # 3
     plt.figure(fig_no, figsize=(17.5, 5))
@@ -282,13 +247,11 @@ def main_run():
 
     print(variables)
     print(csv_data_transpose)
-    #####################################################
 
-    ########################################################################
     ##### CALCULATING R_FIT ##############
     Resistance_fit = np.zeros(iv_number)
     Voltage_fit = np.zeros(iv_number)
-
+    #TODO ASK FOR EXPLANATION this is always equal or smaler than 1
     if (iv_len > 1):
         print("Resistance_fit from IVCs:")
         for k in range(iv_number):
@@ -365,7 +328,6 @@ def main_run():
     print(csv_data_transpose)
     #####################################################
 
-    ###############################################################
     ########### LOADING TEMP DATA FILE ############################
     temp_columns = defaultdict(list)  # each value in each column is appended to a list
     with open(File_name_temp) as f:
@@ -377,17 +339,11 @@ def main_run():
                 temp_columns[i].append(v)
     print('--------------------------------------------------')
     print('There are %s columns in TEMP data' % len(temp_columns))
-    # print(temp_columns)
 
-    # T_time = list(np.float_(temp_columns[T_time_index]))
     T_low = np.array(list(np.float_(temp_columns[T_low_index])))
     T_high = np.array(list(np.float_(temp_columns[T_high_index])))
     Delta_T = abs(T_high - T_low)
-
-    # print('T_low:',T_low)
-    # print('T_high:',T_high)
-    # print('Delta_T:',Delta_T)
-
+    #TODO ASK FOR EXPLANATION why do we need to interpolate
     ######## TEMP DATA INTERPOLATION #############
     Delta_T_interp = np.zeros(interp_len)
     x_temp_old = np.linspace(0, len(Delta_T) - 1, num=len(Delta_T))
@@ -440,6 +396,7 @@ def main_run():
     print(variables)
     print(csv_data_transpose)
     #####################################################
+
     #######  SAVE DATA TO A CSV FILE #######################
     csv_data = numpy.asarray([Delta_T_interp])
     csv_data_transpose = csv_data.transpose()
@@ -452,8 +409,6 @@ def main_run():
     print(variables)
     print(csv_data_transpose)
     #####################################################
-
-    ######################################
 
     ########  dvdt PLOTS CALCULATIONS   ########
     Voltage_fit_interp_norm = Voltage_fit_interp_norm * 10 ** 6
@@ -708,9 +663,6 @@ def main_run():
         diff_Voltage_2d_interp_norm_smooth[i, :] = diff(Voltage_2d_interp_norm_smooth[i, :])
         plt.plot(diff_Voltage_2d_interp_norm_smooth[i, :] / max(diff_Voltage_2d_interp_norm_smooth[i, :]), 'o-',
                  label='IV_point %d' % i)
-    # plt.legend()
-    # plt.xlabel('$Meas. Point$')
-    # plt.ylabel('$\Delta V_{INTERP} (\mu V)$')
 
     diff_Delta_T_interp_smooth = diff(Delta_T_interp_smooth)
     plt.plot(diff_Delta_T_interp_smooth / max(diff_Delta_T_interp_smooth), '-o', label='Delta_T')

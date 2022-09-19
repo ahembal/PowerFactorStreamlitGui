@@ -97,7 +97,7 @@ def main():
             os.mkdir(i[1])
 
     st.sidebar.title("Power Factor Calculation")
-    activities = ["About", "Plot Input Data", "Tune The Parameters", "Analysis & Results", "Session Info"]
+    activities = ["Plot Input Data", "Tune The Parameters", "Analysis & Results", "Session Info"]
     choice = st.sidebar.selectbox("Please Select Activities", activities)
 
     def clean_upload_dir():
@@ -144,7 +144,6 @@ def main():
             st.session_state['csv_path'] = f'{cur_dir}/data/input/sample/Temp.csv'
             st.session_state['loaded_sample_data'] = True
 
-
     if choice == 'Plot Input Data':
         st.header("Visualize Input Data")
         if st.session_state['uploaded_input_data'] or st.session_state['loaded_sample_data']:
@@ -188,7 +187,7 @@ def main():
             df3.plot(ax=ax4, title='Resistance')
             st.pyplot(fig=plt, )
         else:
-            st.subheader("First you need to upload data or you can click to Load Sample Data button!")
+            st.success("First you need to upload data or you can click to Load Sample Data button!")
 
     elif choice == 'Tune The Parameters':
         st.header("Tune Parameters")
@@ -199,10 +198,14 @@ def main():
         col1, col2, col3 = st.columns(3)
         with col1:
             st.session_state['input_variables']['film_thickness_micrometer'] = st.number_input('Film Thickness micrometer', 0, 100, value=st.session_state['input_variables']['film_thickness_micrometer'], help="Film thickness in the unit of micrometer, for Power Factor calculations")
+            st.write(st.session_state['input_variables']['film_thickness_micrometer'])
         with col2:
             st.session_state['input_variables']['film_width_micrometer'] = st.number_input('Film Width micrometer', 0, 100, help="Film thickness in the unit of micrometer, for Power Factor calculations")
+            st.write(st.session_state['input_variables']['film_width_micrometer'])
+
         with col3:
             st.session_state['input_variables']['film_length_micrometer'] = st.number_input('Film Length micrometer', 0, 100, help="Film thickness in the unit of micrometer, for Power Factor calculations")
+            st.write(st.session_state['input_variables']['film_length_micrometer'])
 
         # st.session_state['input_variables']['iv_len'] = st.selectbox('IV length', [0, 1, 3, 5], index=[0, 1, 3, 5].index(st.session_state['input_variables']['iv_len']), help="number of data points in one IVC, 0-1-3-5")
         # st.session_state['input_variables']['zero_bias_point'] = st.radio('Zero Bias Point', [0, 1], index=[0, 1].index(st.session_state['input_variables']['zero_bias_point']), horizontal=True, help="1 or 0 depending on if there is an extra point")
@@ -297,40 +300,6 @@ def main():
         else:
             st.warning('You have not executed any analysis and/or uploaded any data!')
 
-    elif choice == 'About':
-        st.header("About Page")
-        text = "KTH-BIOX LAB POWER FACTOR CALCULATION GUI INTERFACE!"
-
-        def example(color1, color2, color3, content):
-            st.markdown(
-                f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{content}</p>',
-                unsafe_allow_html=True)
-
-        color1 = '#1aa3ff'
-        color2 = '#00ff00'
-        color3 = '#ffffff'
-        example(color1, color2, color3, text)
-        st.subheader("Purpose:")
-        st.write("Purpose of this software is to help researchers to run explore and visualize their experiment through this GUI.")
-        st.subheader('Author: ')
-        st.write("@adembjorn / @borekson & @ahembal")
-        st.subheader('Contact: ')
-        st.write("bjorn@borekson.com & balsever@kth.se")
-        st.subheader('Usage: ')
-        st.write("**To run with sample data:**")
-        st.write("First, push the *Load Sample Data* button at the bottom of sidebar. "
-                "Then you can select activities from drow-down menu at the top of sidebar. "
-                "Plot input data through Plot section. Tune paramaters through Tune section. "
-                "Analyse and see results through Analysis section.")
-        st.write("**To run with uploaded data:**")
-        st.write("First, upload the defined data files through *drag and drop section*. "
-                "Then you can select activities from drow-down menu at the top of sidebar. "
-                "Plot input data through *Plot* section. Tune paramaters through *Tune* section. "
-                "Analyse and see results through *Analysis* section. "
-                 "Download or delete results through *Session Info* section.")
-        st.subheader('License: ')
-        st.write("All rights reserved.®")
-
     elif choice == 'Session Info':
         st.subheader("Session Info")
 
@@ -382,3 +351,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# TODO Show real graph on results page not the pictures

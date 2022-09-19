@@ -7,3 +7,4 @@ iplist
 db/secrets.toml
 /db
 pwrfact.db
+temp.py
