@@ -19,7 +19,7 @@ st.write("Purpose of this software is to help researchers to run, explore and vi
 st.subheader('Author: ')
 st.write("@adembjorn / @borekson & @ahembal")
 st.subheader('Contact: ')
-st.write("bjorn@borekson.com & balsever@kth.se")
+st.write("adem@kth.se & balsever@kth.se")
 st.subheader('Usage: ')
 st.write("**To run with sample data:**")
 st.write("First, push the *Load Sample Data* button at the bottom of sidebar. "
