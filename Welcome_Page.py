@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.header("About Page")
-text = "KTH-BIOX LAB POWER FACTOR CALCULATION GUI INTERFACE!"
+text = "KTH-BIOX LAB POWER FACTOR CALCULATION GUI INTERFACE"
 
 
 
@@ -15,7 +15,7 @@ color2 = '#00ff00'
 color3 = '#ffffff'
 example(color1, color2, color3, text)
 st.subheader("Purpose:")
-st.write("Purpose of this software is to help researchers to run explore and visualize their experiment through this GUI.")
+st.write("Purpose of this software is to help researchers to run, explore and visualize their experiment through this GUI.")
 st.subheader('Author: ')
 st.write("@adembjorn / @borekson & @ahembal")
 st.subheader('Contact: ')
