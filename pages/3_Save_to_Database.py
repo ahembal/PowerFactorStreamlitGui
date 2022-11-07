@@ -154,7 +154,7 @@ st.write(df)
 
 
 def request_token(username, password):
-    endpoint = "http://127.0.0.1:8001/api/auth/"
+    endpoint = "https://bioxapi.balsever.com/api/auth/"
     data = {
         'username': username,
         'password': password,
@@ -204,7 +204,9 @@ def records_to_db_serializer(endpoint, headers, experiment_id, res_vol_temp):
 
 if st.session_state['token']['token'] != None:
     st.success("Token is received!")
-
+if not st.session_state['execute']:
+    st.error("Nothing to save into DB!")
+if st.session_state['execute']:
     # st.write(st.session_state['token'])
     post_experiment_data = {
         "user_id": st.session_state['token']['id'],
@@ -227,7 +229,7 @@ if st.session_state['token']['token'] != None:
     headers = {}
 
     if st.button("Save data to DB"):
-        endpoint = "http://127.0.0.1:8001/experiments/"
+        endpoint = "https://bioxapi.balsever.com/experiments/"
         headers['Authorization'] = f"Token {st.session_state['token']['token']}"
         response = requests.post(endpoint, json=post_experiment_data, headers=headers)
         if response.status_code == 400:
@@ -236,7 +238,7 @@ if st.session_state['token']['token'] != None:
             st.success("Data saved to DB, please check below for details!")
             st.session_state['temp']['pk'] = response.json()['pk']
 
-            endpoint = "http://127.0.0.1:8001/experiments/records/"
+            endpoint = "https://bioxapi.balsever.com/experiments/records/"
             experiment_id = st.session_state['temp']['pk']
             responses =  records_to_db_serializer(endpoint, headers, experiment_id, res_vol_temp)
             # st.write(responses)
