@@ -9,3 +9,4 @@ db/secrets.toml
 pwrfact.db
 temp.py
 /data/temp
+/data/results

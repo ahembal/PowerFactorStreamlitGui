@@ -54,7 +54,10 @@ if 'input_variables' not in st.session_state: st.session_state['input_variables'
 
 }
 if 'plot_returns' not in st.session_state: st.session_state['plot_returns'] = {}
-if 'token' not in st.session_state: st.session_state['token'] = { 'timestamp':datetime.datetime.now(), 'token': None}
+if 'token' not in st.session_state: st.session_state['token'] = {
+    'timestamp':datetime.datetime.now(),
+    'token': None,
+    'id': None}
 
 def reload_def_params():
     st.session_state['input_variables'] = {
