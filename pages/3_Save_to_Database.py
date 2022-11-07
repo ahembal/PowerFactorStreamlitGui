@@ -80,8 +80,7 @@ abbrv = {
 }
 
 
-if os.path.exists(f'{cur_dir}/data/results/DATABASE_8.csv'):
-    st.session_state['execute'] = True
+if st.session_state['execute']:
     st.success("Results found! You can set the parameters and save the result into DB.")
     res_vol_temp = pd.read_csv(f'{cur_dir}/data/results/DATABASE_8.csv')
 else:
@@ -209,7 +208,7 @@ if st.session_state['token']['token'] != None:
     st.success("Token is received!")
 if not st.session_state['execute']:
     st.error("Nothing to save into DB!")
-if st.session_state['execute']:
+if st.session_state['execute'] and st.session_state['token']['token']:
     # st.write(st.session_state['token'])
     post_experiment_data = {
         "user_id": st.session_state['token']['id'],
