@@ -8,7 +8,10 @@ st.set_page_config(
     layout='wide'
 )
 
-if 'token' not in st.session_state: st.session_state['token'] = { 'timestamp':datetime.datetime.now(), 'token': None}
+if 'token' not in st.session_state: st.session_state['token'] = {
+    'timestamp':datetime.datetime.now(),
+    'token': None,
+    'id': None}
 
 
 @st.cache

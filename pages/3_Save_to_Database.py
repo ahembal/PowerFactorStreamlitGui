@@ -68,7 +68,10 @@ if 'available_experiment_parameters' not in st.session_state: st.session_state['
     'linker_percentage': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 }
 if 'execute' not in st.session_state: st.session_state['execute'] = False
-if 'token' not in st.session_state: st.session_state['token'] = { 'timestamp':datetime.datetime.now(), 'token': None}
+if 'token' not in st.session_state: st.session_state['token'] = {
+    'timestamp':datetime.datetime.now(),
+    'token': None,
+    'id': None}
 if 'temp' not in st.session_state: st.session_state['temp'] = {}
 
 abbrv = {
