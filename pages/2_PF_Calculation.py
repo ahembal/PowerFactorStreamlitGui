@@ -291,11 +291,9 @@ def main():
 
         elif st.session_state['uploaded_input_data'] or st.session_state['loaded_sample_data']:
             if (
-                    st.button('EXECUTE', args=('execute', True))
+                    st.button('EXECUTE', on_click=main_run)
             ):
-                st.warning('Are you sure you want to execute this?')
-
-                st.button('YES', on_click=main_run)
+                st.warning('This will take some time?')
                 st.session_state['results'] = True
                 st.session_state['execute'] = True
         else:
