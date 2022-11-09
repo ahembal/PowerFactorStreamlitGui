@@ -14,7 +14,7 @@ if 'token' not in st.session_state: st.session_state['token'] = {
     'id': None}
 
 
-@st.cache
+# @st.cache
 def get_experiments_list():
     endpoint = "https://bioxapi.balsever.com/experiments/"
     get_response = requests.get(endpoint)
